@@ -28,12 +28,12 @@ The MRL core defines:
 
 Implementation shape is selected through a pack.
 
-This repository currently adopts the `python_ddd_monolith` pack. Other repositories may instead adopt:
+This repository currently adopts the `polyglot_client_server` pack. Other repositories may instead adopt:
 
 - `typescript_application`
 - `go_service`
 - `event_sourced_domain`
-- `polyglot_client_server`
+- `python_ddd_monolith`
 
 If a repository changes pack, record the decision in `decisions.md` and update this document so it describes the selected shape rather than pretending to be a universal MRL rule.
 
@@ -41,65 +41,74 @@ If a repository changes pack, record the decision in `decisions.md` and update t
 
 ## Core Intent
 
-Within this repository, the system should behave like a **DDD-inspired modular monolith**.
+Within this repository, the system should behave like a **client/server browser application with an explicit backend contract boundary**.
 
 It should prefer:
 
-- explicit use cases over generic service blobs
-- domain models with behavior over anemic data containers
-- ports and adapters over direct framework coupling
-- deterministic local simulation over distributed complexity
-- testability and inspectability over premature realism
+- explicit workflow modules over generic component blobs
+- explicit transport adapters over leaked backend payload shapes
+- deterministic local tests over environment-heavy realism
+- testability and inspectability over premature framework sprawl
+- thin browser routes that compose behavior without owning backend truth
 
-This project is a **refinement environment**, not a microservices platform.
+This project is a **refinement environment** for the web interface, not a backend monolith and not a microservices platform.
 
-That statement is local to this selected pack. MRL as a workflow does not require a modular monolith and can support multi-process or multi-runtime systems when the model requires them.
+That statement is local to this selected pack. MRL as a workflow does not require one runtime and can support multi-process or multi-runtime systems when the model requires them.
+
+## Current Pack Interpretation
+
+The active repository target is:
+
+- one browser client under `src/client/`
+- no server implementation in this repository
+- an explicit HTTP/API contract boundary to the contacts backend
+- tests split between client behavior and contract mapping
+
+The repository therefore owns:
+
+- route semantics
+- page state
+- client-side validation for usability
+- backend transport mapping
+- user-visible success and failure feedback
+
+The repository does not own:
+
+- backend persistence
+- authoritative contact invariants
+- backend auth implementation
 
 ---
 
 ## Architectural Style For This Pack
 
-The project follows a layered approach:
+The project follows an explicit client/server split:
 
 ```text
-Tests -----------------> Use Cases -----------------> Domain Models
-Interfaces/API Facade -> Use Cases -----------------> Repositories (ports)
-                                          ---------> Message Bus (port)
-                                          ---------> External APIs (ports)
+tests/client/ ----------> client pages and workflow modules
+tests/contracts/ -------> transport mapping and gateway behavior
+src/client/pages/ ------> route-level workflow composition
+src/client/api/ --------> backend gateway
+src/client/contracts/ --> transport mapping and contract validation
+src/client/models/ -----> client-facing data shapes and local validation
 ```
 
 A more explicit view:
 
 ```text
-src/app/
-  domain/
+src/
+  client/
+    api/
+    contracts/
     models/
-    services/
-    events/
-    value_objects/
-
-  application/
-    use_cases/
-    ports/
-    dto/
-
-  interfaces/
-    api_facade/
-
-  infrastructure/
-    sqlite/
-    repositories/
-    message_bus/
-    fakes/
-    clock/
-    ids/
+    pages/
 
 tests/
-  unit/
-  integration/
+  client/
+  contracts/
 ```
 
-This is a pack-specific example, not a required layout for every MRL repository.
+This is the active repository shape for the current frontend slice, not a required layout for every MRL repository.
 
 ### Layer responsibilities
 

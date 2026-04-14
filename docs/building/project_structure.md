@@ -171,52 +171,18 @@ src/
   ... pack-specific code layout
 ```
 
-### Example: `python_ddd_monolith` pack
-
-```text
-src/
-  app/
-    domain/
-      models/
-      value_objects/
-      services/
-      events/
-      exceptions/
-
-    application/
-      use_cases/
-      dto/
-      ports/
-      services/
-
-    infrastructure/
-      sqlite/
-        repositories/
-        message_bus/
-        migrations/
-      fakes/
-      clocks/
-      ids/
-      gateways/
-      mappers/
-
-    interfaces/
-      api_facade/
-      cli/
-```
-
 ### Example: `polyglot_client_server` pack
 
 ```text
 src/
   client/
-  server/
-  shared_contracts/
+    api/
+    contracts/
+    models/
+    pages/
 
 tests/
   client/
-  server/
-  integration/
   contracts/
 ```
 
