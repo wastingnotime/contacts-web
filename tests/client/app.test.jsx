@@ -614,4 +614,46 @@ describe("App", () => {
       expect(screen.getByRole("alert")).toHaveTextContent("backend unavailable");
     });
   });
+
+  it("retries loading contacts after an initial list failure", async () => {
+    const apiClient = {
+      calls: [],
+      attempts: 0,
+      async listContacts() {
+        this.calls.push({ type: "list" });
+        if (this.attempts === 0) {
+          this.attempts += 1;
+          throw new Error("backend unavailable");
+        }
+        return [
+          {
+            id: "contact-1",
+            firstName: "Ada",
+            lastName: "Lovelace",
+            phoneNumber: "555-0001",
+          },
+        ];
+      },
+      async createContact() {
+        throw new Error("not used");
+      },
+      async getContact() {
+        throw new Error("not used");
+      },
+      async updateContact() {
+        throw new Error("not used");
+      },
+      async deleteContact() {
+        throw new Error("not used");
+      },
+    };
+
+    mountApp(apiClient, "/");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("backend unavailable");
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    await screen.findByText("Ada Lovelace");
+    expect(apiClient.calls).toEqual([{ type: "list" }, { type: "list" }]);
+  });
 });

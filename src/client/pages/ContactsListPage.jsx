@@ -110,7 +110,10 @@ export function ContactsListPage(props) {
 
       <Show when={contacts.error}>
         <div class="error-banner" role="alert">
-          {getContactErrorMessage(contacts.error, "Unable to load contacts right now.")}
+          <p>{getContactErrorMessage(contacts.error, "Unable to load contacts right now.")}</p>
+          <button class="secondary-button" type="button" onClick={refetch}>
+            Retry
+          </button>
         </div>
       </Show>
 
