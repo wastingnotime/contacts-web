@@ -44,7 +44,12 @@ export function CreateContactPage(props) {
           <h2>Create contact</h2>
           <p>Enter the required fields and submit them through the backend adapter.</p>
         </div>
-        <button class="ghost-button" type="button" onClick={() => props.navigate("/")}>
+        <button
+          class="ghost-button"
+          type="button"
+          disabled={isSubmitting()}
+          onClick={() => props.navigate("/")}
+        >
           Back to list
         </button>
       </div>
@@ -61,6 +66,10 @@ export function CreateContactPage(props) {
           <div class="error-banner" role="alert">
             {formError()}
           </div>
+        </Show>
+
+        <Show when={isSubmitting()}>
+          <p role="status">Saving contact...</p>
         </Show>
 
         <button

@@ -176,6 +176,43 @@ describe("App", () => {
     ]);
   });
 
+  it("shows a pending state while contact creation is in flight", async () => {
+    const deferred = createDeferred();
+    const apiClient = createStubApiClient();
+    apiClient.createContact = async (draft) => {
+      apiClient.calls.push({ type: "create", draft });
+      await deferred.promise;
+      const created = {
+        id: `contact-${apiClient.state.contacts.length + 1}`,
+        ...draft,
+      };
+      apiClient.state.contacts.push(created);
+      return created;
+    };
+
+    mountApp(apiClient, "/new");
+
+    fireEvent.input(screen.getByRole("textbox", { name: /first name/i }), {
+      target: { value: "Grace" },
+    });
+    fireEvent.input(screen.getByRole("textbox", { name: /last name/i }), {
+      target: { value: "Hopper" },
+    });
+    fireEvent.input(screen.getByRole("textbox", { name: /phone number/i }), {
+      target: { value: "555-0100" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save contact" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Saving contact...");
+    expect(screen.getByRole("button", { name: "Saving..." })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Back to list" })).toBeDisabled();
+
+    deferred.resolve();
+
+    await screen.findByRole("heading", { name: "Contacts list" });
+    await screen.findByText("Grace Hopper");
+  });
+
   it("loads a contact for editing and updates it through the backend adapter", async () => {
     const apiClient = createStubApiClient([
       {
@@ -219,6 +256,46 @@ describe("App", () => {
       },
       { type: "list" },
     ]);
+  });
+
+  it("shows a pending state while contact editing is in flight", async () => {
+    const deferred = createDeferred();
+    const apiClient = createStubApiClient([
+      {
+        id: "contact-1",
+        firstName: "Ada",
+        lastName: "Lovelace",
+        phoneNumber: "555-0001",
+      },
+    ]);
+    apiClient.updateContact = async (contactId, draft) => {
+      apiClient.calls.push({ type: "update", contactId, draft });
+      await deferred.promise;
+      const index = apiClient.state.contacts.findIndex((item) => item.id === contactId);
+      apiClient.state.contacts[index] = {
+        id: contactId,
+        ...draft,
+      };
+      return { ...apiClient.state.contacts[index] };
+    };
+
+    mountApp(apiClient, "/edit/contact-1");
+
+    await screen.findByRole("heading", { name: "Edit contact" });
+    fireEvent.input(screen.getByRole("textbox", { name: /last name/i }), {
+      target: { value: "Byron" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Saving changes...");
+    expect(screen.getByRole("button", { name: "Saving..." })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Back to list" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
+
+    deferred.resolve();
+
+    await screen.findByRole("heading", { name: "Contacts list" });
+    await screen.findByText("Ada Byron");
   });
 
   it("keeps the edit form on the page when the backend rejects update", async () => {

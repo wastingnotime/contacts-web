@@ -62,7 +62,12 @@ export function EditContactPage(props) {
           <h2>Edit contact</h2>
           <p>Load the record, update the fields, and submit through the backend adapter.</p>
         </div>
-        <button class="ghost-button" type="button" onClick={() => props.navigate("/")}>
+        <button
+          class="ghost-button"
+          type="button"
+          disabled={isSubmitting()}
+          onClick={() => props.navigate("/")}
+        >
           Back to list
         </button>
       </div>
@@ -92,11 +97,20 @@ export function EditContactPage(props) {
             </div>
           </Show>
 
+          <Show when={isSubmitting()}>
+            <p role="status">Saving changes...</p>
+          </Show>
+
           <div class="form-actions">
             <button class="primary-button" type="submit" disabled={isSubmitting()}>
               {isSubmitting() ? "Saving..." : "Save changes"}
             </button>
-            <button class="ghost-button" type="button" onClick={() => props.navigate("/")}>
+            <button
+              class="ghost-button"
+              type="button"
+              disabled={isSubmitting()}
+              onClick={() => props.navigate("/")}
+            >
               Cancel
             </button>
           </div>
