@@ -10,6 +10,24 @@ Expose the released build as a portable static frontend artifact packaged into a
 
 The container should serve the built `dist/` output so the released UI can be exercised in a browser against the contacts backend boundary.
 
+## Concrete Runtime Setup
+
+- `Dockerfile` builds the Vite app in a `node:25-alpine` stage
+- `nginx.conf` serves the static `dist/` output with SPA fallback
+- `.dockerignore` keeps the build context small and avoids shipping repo memory
+
+Build:
+
+```bash
+docker build -t contacts-web:exposure .
+```
+
+Run:
+
+```bash
+docker run --rm -p 8080:80 contacts-web:exposure
+```
+
 ## Why This Target
 
 - the repository has no existing deployment platform integration
@@ -33,7 +51,6 @@ Expected feedback should come from:
 
 ## Exposure Notes
 
-- no code changes are part of this step
-- no backend contract changes are part of this step
-- this plan records the intended deployment-style exposure, not the deployment implementation itself
-
+- the backend contract is unchanged
+- this records the intended deployment-style exposure and the concrete runtime setup
+- the runtime files in the repo support the containerized exposure target above
