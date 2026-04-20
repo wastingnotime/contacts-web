@@ -81,6 +81,16 @@ function createStubApiClient(initialContacts = []) {
   };
 }
 
+function createDeferred() {
+  let resolve;
+  let reject;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
 function mountApp(apiClient, path = "/") {
   window.history.pushState({}, "", path);
   return render(() => <App apiClient={apiClient} />);
@@ -308,6 +318,38 @@ describe("App", () => {
       { type: "delete", contactId: "contact-1" },
       { type: "list" },
     ]);
+  });
+
+  it("shows a pending state while delete is in flight", async () => {
+    const deferred = createDeferred();
+    const apiClient = createStubApiClient([
+      {
+        id: "contact-1",
+        firstName: "Ada",
+        lastName: "Lovelace",
+        phoneNumber: "555-0001",
+      },
+    ]);
+    apiClient.deleteContact = async (contactId) => {
+      apiClient.calls.push({ type: "delete", contactId });
+      await deferred.promise;
+      apiClient.state.contacts = apiClient.state.contacts.filter((item) => item.id !== contactId);
+      return null;
+    };
+
+    mountApp(apiClient, "/");
+
+    await screen.findByText("Ada Lovelace");
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm delete" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Deleting contact...");
+    expect(screen.getByRole("button", { name: "Deleting..." })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
+
+    deferred.resolve();
+
+    await screen.findByText("No contacts yet");
   });
 
   it("shows delete failures without leaving the list view", async () => {

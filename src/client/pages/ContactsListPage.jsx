@@ -19,11 +19,14 @@ function ContactListItem(props) {
         </button>
         <Show when={!props.confirmationActive} fallback={
           <div class="delete-confirmation">
-            <p role="status">Confirm delete?</p>
+            <p role="status">
+              {props.deleting ? "Deleting contact..." : "Confirm delete?"}
+            </p>
             <div class="form-actions">
               <button
                 class="danger-button"
                 type="button"
+                disabled={props.deleting}
                 onClick={() => props.onConfirmDelete(props.contact.id)}
               >
                 {props.deleting ? "Deleting..." : "Confirm delete"}
@@ -31,6 +34,7 @@ function ContactListItem(props) {
               <button
                 class="ghost-button"
                 type="button"
+                disabled={props.deleting}
                 onClick={props.onCancelDelete}
               >
                 Cancel
@@ -64,7 +68,6 @@ export function ContactsListPage(props) {
   const deleteContact = async (contactId) => {
     setDeleteError("");
     setDeletingContactId(contactId);
-    setDeleteConfirmationContactId("");
     try {
       await props.apiClient.deleteContact(contactId);
       await refetch();
@@ -76,6 +79,7 @@ export function ContactsListPage(props) {
       }
     } finally {
       setDeletingContactId("");
+      setDeleteConfirmationContactId("");
     }
   };
 
