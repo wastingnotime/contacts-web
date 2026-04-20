@@ -66,7 +66,12 @@ describe("HttpContactsApiClient", () => {
       throw new Error(`Unexpected request: ${options.method} ${url}`);
     });
 
-    const apiClient = new HttpContactsApiClient({ baseUrl: "", fetchFn });
+    const apiClient = new HttpContactsApiClient({
+      baseUrl: "",
+      authSubject: "admin-user",
+      authRoles: "admin",
+      fetchFn,
+    });
 
     await expect(apiClient.listContacts()).resolves.toEqual([
       {
@@ -100,5 +105,67 @@ describe("HttpContactsApiClient", () => {
 
     await expect(apiClient.deleteContact("contact-1")).resolves.toBeNull();
     expect(fetchFn).toHaveBeenCalledTimes(4);
+  });
+
+  it("sends backend claims headers on every request", async () => {
+    const fetchFn = vi.fn(async (url, options = {}) => {
+      if (url.endsWith("/contacts") && options.method === "GET") {
+        return createResponse({
+          jsonBody: [],
+        });
+      }
+
+      if (url.endsWith("/contacts") && options.method === "POST") {
+        expect(JSON.parse(options.body)).toEqual({
+          first_name: "Grace",
+          last_name: "Hopper",
+          phone_number: "555-0100",
+        });
+        return createResponse({
+          status: 201,
+          jsonBody: {
+            id: "contact-1",
+            first_name: "Grace",
+            last_name: "Hopper",
+            phone_number: "555-0100",
+          },
+          textBody: JSON.stringify({
+            id: "contact-1",
+            first_name: "Grace",
+            last_name: "Hopper",
+            phone_number: "555-0100",
+          }),
+        });
+      }
+
+      throw new Error(`Unexpected request: ${options.method} ${url}`);
+    });
+
+    const apiClient = new HttpContactsApiClient({
+      baseUrl: "",
+      authSubject: "admin-user",
+      authRoles: "admin",
+      fetchFn,
+    });
+
+    await apiClient.listContacts();
+    await apiClient.createContact({
+      id: "",
+      firstName: "Grace",
+      lastName: "Hopper",
+      phoneNumber: "555-0100",
+    });
+
+    expect(fetchFn.mock.calls[0][1].headers).toMatchObject({
+      Accept: "application/json",
+      "x-auth-subject": "admin-user",
+      "x-auth-roles": "admin",
+    });
+    expect(fetchFn.mock.calls[1][1].headers).toMatchObject({
+      Accept: "application/json",
+      "x-auth-subject": "admin-user",
+      "x-auth-roles": "admin",
+      "Content-Type": "application/json",
+    });
   });
 });

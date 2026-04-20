@@ -8,17 +8,31 @@ import {
 } from "../contracts/contactTransport";
 
 export class HttpContactsApiClient {
-  constructor({ baseUrl, fetchFn }) {
+  constructor({ baseUrl, authSubject, authRoles, fetchFn }) {
     this.baseUrl = baseUrl;
+    this.authSubject = authSubject;
+    this.authRoles = authRoles;
     this.fetchFn = fetchFn;
+  }
+
+  requestHeaders(jsonBody = false) {
+    const headers = {
+      Accept: "application/json",
+      "x-auth-subject": this.authSubject,
+      "x-auth-roles": this.authRoles,
+    };
+
+    if (jsonBody) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    return headers;
   }
 
   async listContacts() {
     const response = await this.fetchFn(`${this.baseUrl}/contacts`, {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: this.requestHeaders(),
     });
 
     if (!response.ok) {
@@ -33,10 +47,7 @@ export class HttpContactsApiClient {
     const body = JSON.stringify(mapDraftToCreatePayload(draft));
     const response = await this.fetchFn(`${this.baseUrl}/contacts`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: this.requestHeaders(true),
       body,
     });
 
@@ -59,9 +70,7 @@ export class HttpContactsApiClient {
   async getContact(contactId) {
     const response = await this.fetchFn(`${this.baseUrl}/contacts/${contactId}`, {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: this.requestHeaders(),
     });
 
     if (!response.ok) {
@@ -76,10 +85,7 @@ export class HttpContactsApiClient {
     const body = JSON.stringify(mapDraftToUpdatePayload(draft));
     const response = await this.fetchFn(`${this.baseUrl}/contacts/${contactId}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: this.requestHeaders(true),
       body,
     });
 
@@ -94,9 +100,7 @@ export class HttpContactsApiClient {
   async deleteContact(contactId) {
     const response = await this.fetchFn(`${this.baseUrl}/contacts/${contactId}`, {
       method: "DELETE",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: this.requestHeaders(),
     });
 
     if (response.status === 204) {
