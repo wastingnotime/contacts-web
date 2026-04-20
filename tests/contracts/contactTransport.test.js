@@ -6,6 +6,7 @@ import {
   mapTransportContactToViewModel,
   mapTransportListToViewModels,
 } from "../../src/client/contracts/contactTransport";
+import { getContactErrorMessage } from "../../src/client/contracts/contactErrors";
 
 describe("contactTransport", () => {
   it("maps a snake_case contact payload into a camelCase view model", () => {
@@ -93,5 +94,11 @@ describe("contactTransport", () => {
         last_name: "Lovelace",
       }),
     ).toThrow(ContactTransportError);
+  });
+
+  it("maps authorization errors into a consistent browser-facing message", () => {
+    expect(
+      getContactErrorMessage({ code: "authorization", message: "not allowed" }, "fallback"),
+    ).toBe("You are not allowed to access contacts right now.");
   });
 });

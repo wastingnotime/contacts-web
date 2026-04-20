@@ -1,5 +1,7 @@
 import { For, Show, createResource, createSignal } from "solid-js";
 
+import { getContactErrorMessage } from "../contracts/contactErrors";
+
 function ContactListItem(props) {
   return (
     <li class="contact-card">
@@ -71,7 +73,7 @@ export function ContactsListPage(props) {
 
       <Show when={contacts.error}>
         <div class="error-banner" role="alert">
-          Unable to load contacts right now.
+          {getContactErrorMessage(contacts.error, "Unable to load contacts right now.")}
         </div>
       </Show>
 

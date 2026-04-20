@@ -1,19 +1,12 @@
 import { Show, createEffect, createResource, createSignal } from "solid-js";
 
 import { ContactFormFields } from "../components/ContactFormFields";
+import { getContactErrorMessage } from "../contracts/contactErrors";
 import {
   createEmptyContactDraft,
   createContactDraftFromViewModel,
   validateContactDraft,
 } from "../models/contact";
-
-function getContactErrorMessage(error) {
-  if (error && typeof error === "object" && "message" in error && error.message) {
-    return error.message;
-  }
-
-  return "Unable to load contact right now.";
-}
 
 export function EditContactPage(props) {
   const [draft, setDraft] = createSignal(createEmptyContactDraft());
@@ -56,16 +49,7 @@ export function EditContactPage(props) {
       await props.apiClient.updateContact(props.contactId, currentDraft);
       props.navigate("/");
     } catch (error) {
-      if (
-        error &&
-        typeof error === "object" &&
-        "code" in error &&
-        ["validation", "duplicate", "authorization", "not_found"].includes(error.code)
-      ) {
-        setFormError(error.message);
-      } else {
-        setFormError("Unable to update contact right now.");
-      }
+      setFormError(getContactErrorMessage(error, "Unable to update contact right now."));
     } finally {
       setIsSubmitting(false);
     }

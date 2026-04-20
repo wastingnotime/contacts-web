@@ -1,6 +1,7 @@
 import { Show, createSignal } from "solid-js";
 
 import { ContactFormFields } from "../components/ContactFormFields";
+import { getContactErrorMessage } from "../contracts/contactErrors";
 import { createEmptyContactDraft, validateContactDraft } from "../models/contact";
 
 export function CreateContactPage(props) {
@@ -30,11 +31,7 @@ export function CreateContactPage(props) {
       await props.apiClient.createContact(currentDraft);
       props.navigate("/");
     } catch (error) {
-      if (error.code === "validation" || error.code === "duplicate") {
-        setFormError(error.message);
-      } else {
-        setFormError("Unable to save contact right now.");
-      }
+      setFormError(getContactErrorMessage(error, "Unable to save contact right now."));
     } finally {
       setIsSubmitting(false);
     }

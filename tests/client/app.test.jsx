@@ -313,6 +313,88 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "Create contact" })).toBeInTheDocument();
   });
 
+  it("shows an authorization failure distinctly when contact creation is rejected", async () => {
+    const apiClient = createStubApiClient();
+    apiClient.state.createError = {
+      code: "authorization",
+      message: "You are not allowed to access contacts right now.",
+    };
+
+    mountApp(apiClient, "/new");
+
+    fireEvent.input(screen.getByRole("textbox", { name: /first name/i }), {
+      target: { value: "Grace" },
+    });
+    fireEvent.input(screen.getByRole("textbox", { name: /last name/i }), {
+      target: { value: "Hopper" },
+    });
+    fireEvent.input(screen.getByRole("textbox", { name: /phone number/i }), {
+      target: { value: "555-0100" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save contact" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "You are not allowed to access contacts right now.",
+    );
+    expect(screen.getByRole("heading", { name: "Create contact" })).toBeInTheDocument();
+  });
+
+  it("shows an authorization failure distinctly when contacts cannot be loaded", async () => {
+    const apiClient = {
+      async listContacts() {
+        const error = new Error("You are not allowed to access contacts right now.");
+        error.code = "authorization";
+        throw error;
+      },
+      async createContact() {
+        throw new Error("not used");
+      },
+      async getContact() {
+        throw new Error("not used");
+      },
+      async updateContact() {
+        throw new Error("not used");
+      },
+      async deleteContact() {
+        throw new Error("not used");
+      },
+    };
+
+    mountApp(apiClient, "/");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "You are not allowed to access contacts right now.",
+    );
+  });
+
+  it("shows an authorization failure distinctly when contact editing is rejected", async () => {
+    const apiClient = createStubApiClient([
+      {
+        id: "contact-1",
+        firstName: "Ada",
+        lastName: "Lovelace",
+        phoneNumber: "555-0001",
+      },
+    ]);
+    apiClient.state.updateError = {
+      code: "authorization",
+      message: "You are not allowed to access contacts right now.",
+    };
+
+    mountApp(apiClient, "/edit/contact-1");
+
+    await screen.findByRole("heading", { name: "Edit contact" });
+    fireEvent.input(screen.getByRole("textbox", { name: /last name/i }), {
+      target: { value: "Byron" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "You are not allowed to access contacts right now.",
+    );
+    expect(screen.getByRole("heading", { name: "Edit contact" })).toBeInTheDocument();
+  });
+
   it("shows a list error when contacts cannot be loaded", async () => {
     const apiClient = {
       async listContacts() {
@@ -335,7 +417,7 @@ describe("App", () => {
     mountApp(apiClient, "/");
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Unable to load contacts right now.");
+      expect(screen.getByRole("alert")).toHaveTextContent("backend unavailable");
     });
   });
 });
