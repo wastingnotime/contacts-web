@@ -1,8 +1,18 @@
 export function createEmptyContactDraft() {
   return {
+    id: "",
     firstName: "",
     lastName: "",
     phoneNumber: "",
+  };
+}
+
+export function createContactDraftFromViewModel(contact) {
+  return {
+    id: contact.id,
+    firstName: contact.firstName,
+    lastName: contact.lastName,
+    phoneNumber: contact.phoneNumber,
   };
 }
 

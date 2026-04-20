@@ -1,6 +1,7 @@
 import {
   ContactApiError,
   mapDraftToCreatePayload,
+  mapDraftToUpdatePayload,
   mapResponseToApiError,
   mapTransportContactToViewModel,
   mapTransportListToViewModels,
@@ -53,5 +54,59 @@ export class HttpContactsApiClient {
     }
 
     throw new ContactApiError("Unexpected create-contact response.", "unknown");
+  }
+
+  async getContact(contactId) {
+    const response = await this.fetchFn(`${this.baseUrl}/contacts/${contactId}`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw mapResponseToApiError(response, "Unable to load contact.");
+    }
+
+    const payload = await response.json();
+    return mapTransportContactToViewModel(payload);
+  }
+
+  async updateContact(contactId, draft) {
+    const body = JSON.stringify(mapDraftToUpdatePayload(draft));
+    const response = await this.fetchFn(`${this.baseUrl}/contacts/${contactId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body,
+    });
+
+    if (!response.ok) {
+      throw mapResponseToApiError(response, "Unable to update contact.");
+    }
+
+    const payload = await response.json();
+    return mapTransportContactToViewModel(payload);
+  }
+
+  async deleteContact(contactId) {
+    const response = await this.fetchFn(`${this.baseUrl}/contacts/${contactId}`, {
+      method: "DELETE",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (response.status === 204) {
+      return null;
+    }
+
+    if (!response.ok) {
+      throw mapResponseToApiError(response, "Unable to delete contact.");
+    }
+
+    return null;
   }
 }

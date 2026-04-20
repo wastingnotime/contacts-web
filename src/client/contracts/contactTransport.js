@@ -50,9 +50,23 @@ export function mapDraftToCreatePayload(draft) {
   };
 }
 
+export function mapDraftToUpdatePayload(draft) {
+  const payload = mapDraftToCreatePayload(draft);
+  if (typeof draft.id === "string" && draft.id.trim() !== "") {
+    payload.id = draft.id;
+  }
+  return payload;
+}
+
 export function mapResponseToApiError(response, fallbackMessage) {
   if (response.status === 400) {
     return new ContactApiError("The contact data is invalid.", "validation");
+  }
+  if (response.status === 403) {
+    return new ContactApiError("You are not allowed to access contacts right now.", "authorization");
+  }
+  if (response.status === 404) {
+    return new ContactApiError("That contact could not be found.", "not_found");
   }
   if (response.status === 409) {
     return new ContactApiError("A contact with this data already exists.", "duplicate");

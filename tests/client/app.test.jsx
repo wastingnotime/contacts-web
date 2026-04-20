@@ -6,6 +6,9 @@ function createStubApiClient(initialContacts = []) {
   const state = {
     contacts: [...initialContacts],
     createError: null,
+    getError: null,
+    updateError: null,
+    deleteError: null,
   };
 
   return {
@@ -26,6 +29,54 @@ function createStubApiClient(initialContacts = []) {
       };
       state.contacts.push(created);
       return created;
+    },
+    async getContact(contactId) {
+      this.calls.push({ type: "get", contactId });
+      if (state.getError) {
+        throw state.getError;
+      }
+      const contact = state.contacts.find((item) => item.id === contactId);
+      if (!contact) {
+        throw {
+          code: "not_found",
+          message: "That contact could not be found.",
+        };
+      }
+      return { ...contact };
+    },
+    async updateContact(contactId, draft) {
+      this.calls.push({ type: "update", contactId, draft });
+      if (state.updateError) {
+        throw state.updateError;
+      }
+      const index = state.contacts.findIndex((item) => item.id === contactId);
+      if (index < 0) {
+        throw {
+          code: "not_found",
+          message: "That contact could not be found.",
+        };
+      }
+      const updated = {
+        id: contactId,
+        ...draft,
+      };
+      state.contacts[index] = updated;
+      return { ...updated };
+    },
+    async deleteContact(contactId) {
+      this.calls.push({ type: "delete", contactId });
+      if (state.deleteError) {
+        throw state.deleteError;
+      }
+      const index = state.contacts.findIndex((item) => item.id === contactId);
+      if (index < 0) {
+        throw {
+          code: "not_found",
+          message: "That contact could not be found.",
+        };
+      }
+      state.contacts.splice(index, 1);
+      return null;
     },
   };
 }
@@ -105,6 +156,7 @@ describe("App", () => {
       {
         type: "create",
         draft: {
+          id: "",
           firstName: "Grace",
           lastName: "Hopper",
           phoneNumber: "555-0100",
@@ -112,6 +164,127 @@ describe("App", () => {
       },
       { type: "list" },
     ]);
+  });
+
+  it("loads a contact for editing and updates it through the backend adapter", async () => {
+    const apiClient = createStubApiClient([
+      {
+        id: "contact-1",
+        firstName: "Ada",
+        lastName: "Lovelace",
+        phoneNumber: "555-0001",
+      },
+    ]);
+
+    mountApp(apiClient, "/edit/contact-1");
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Loading contact...");
+    expect(await screen.findByRole("heading", { name: "Edit contact" })).toBeInTheDocument();
+
+    expect(screen.getByRole("textbox", { name: /first name/i })).toHaveValue("Ada");
+    expect(screen.getByRole("textbox", { name: /last name/i })).toHaveValue("Lovelace");
+    expect(screen.getByRole("textbox", { name: /phone number/i })).toHaveValue("555-0001");
+
+    fireEvent.input(screen.getByRole("textbox", { name: /last name/i }), {
+      target: { value: "Byron" },
+    });
+    fireEvent.input(screen.getByRole("textbox", { name: /phone number/i }), {
+      target: { value: "555-0009" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await screen.findByRole("heading", { name: "Contacts list" });
+    await screen.findByText("Ada Byron");
+    expect(apiClient.calls).toEqual([
+      { type: "get", contactId: "contact-1" },
+      {
+        type: "update",
+        contactId: "contact-1",
+        draft: {
+          id: "contact-1",
+          firstName: "Ada",
+          lastName: "Byron",
+          phoneNumber: "555-0009",
+        },
+      },
+      { type: "list" },
+    ]);
+  });
+
+  it("keeps the edit form on the page when the backend rejects update", async () => {
+    const apiClient = createStubApiClient([
+      {
+        id: "contact-1",
+        firstName: "Ada",
+        lastName: "Lovelace",
+        phoneNumber: "555-0001",
+      },
+    ]);
+    apiClient.state.updateError = {
+      code: "not_found",
+      message: "That contact could not be found.",
+    };
+
+    mountApp(apiClient, "/edit/contact-1");
+
+    await screen.findByRole("heading", { name: "Edit contact" });
+    fireEvent.input(screen.getByRole("textbox", { name: /last name/i }), {
+      target: { value: "Byron" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("That contact could not be found.");
+    expect(screen.getByRole("heading", { name: "Edit contact" })).toBeInTheDocument();
+  });
+
+  it("deletes a contact from the list and refreshes the list state", async () => {
+    const apiClient = createStubApiClient([
+      {
+        id: "contact-1",
+        firstName: "Ada",
+        lastName: "Lovelace",
+        phoneNumber: "555-0001",
+      },
+    ]);
+
+    mountApp(apiClient, "/");
+
+    await screen.findByText("Ada Lovelace");
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("No contacts yet")).toBeInTheDocument();
+    });
+    expect(apiClient.calls).toEqual([
+      { type: "list" },
+      { type: "delete", contactId: "contact-1" },
+      { type: "list" },
+    ]);
+  });
+
+  it("shows delete failures without leaving the list view", async () => {
+    const apiClient = createStubApiClient([
+      {
+        id: "contact-1",
+        firstName: "Ada",
+        lastName: "Lovelace",
+        phoneNumber: "555-0001",
+      },
+    ]);
+    apiClient.state.deleteError = {
+      code: "authorization",
+      message: "You are not allowed to access contacts right now.",
+    };
+
+    mountApp(apiClient, "/");
+
+    await screen.findByText("Ada Lovelace");
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "You are not allowed to access contacts right now.",
+    );
+    expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
   });
 
   it("keeps the user on the form when the backend rejects creation", async () => {
@@ -146,6 +319,15 @@ describe("App", () => {
         throw new Error("backend unavailable");
       },
       async createContact() {
+        throw new Error("not used");
+      },
+      async getContact() {
+        throw new Error("not used");
+      },
+      async updateContact() {
+        throw new Error("not used");
+      },
+      async deleteContact() {
         throw new Error("not used");
       },
     };

@@ -1,4 +1,4 @@
-import { For, Show, createResource } from "solid-js";
+import { For, Show, createResource, createSignal } from "solid-js";
 
 function ContactListItem(props) {
   return (
@@ -7,12 +7,51 @@ function ContactListItem(props) {
         <h3>{props.contact.firstName} {props.contact.lastName}</h3>
         <p>{props.contact.phoneNumber}</p>
       </div>
+      <div class="contact-card-actions">
+        <button
+          class="secondary-button"
+          type="button"
+          onClick={() => props.onEdit(props.contact.id)}
+        >
+          Edit
+        </button>
+        <button
+          class="ghost-button danger-button"
+          type="button"
+          disabled={props.deleting}
+          onClick={() => props.onDelete(props.contact.id)}
+        >
+          {props.deleting ? "Deleting..." : "Delete"}
+        </button>
+      </div>
     </li>
   );
 }
 
 export function ContactsListPage(props) {
-  const [contacts] = createResource(() => props.apiClient.listContacts());
+  const [deleteError, setDeleteError] = createSignal("");
+  const [deletingContactId, setDeletingContactId] = createSignal("");
+  const [contacts, { refetch }] = createResource(
+    () => props.apiClient,
+    (apiClient) => apiClient.listContacts(),
+  );
+
+  const deleteContact = async (contactId) => {
+    setDeleteError("");
+    setDeletingContactId(contactId);
+    try {
+      await props.apiClient.deleteContact(contactId);
+      await refetch();
+    } catch (error) {
+      if (error && typeof error === "object" && "message" in error && error.message) {
+        setDeleteError(error.message);
+      } else {
+        setDeleteError("Unable to delete contact right now.");
+      }
+    } finally {
+      setDeletingContactId("");
+    }
+  };
 
   return (
     <section class="panel">
@@ -36,6 +75,12 @@ export function ContactsListPage(props) {
         </div>
       </Show>
 
+      <Show when={deleteError()}>
+        <div class="error-banner" role="alert">
+          {deleteError()}
+        </div>
+      </Show>
+
       <Show when={!contacts.loading && !contacts.error && contacts()?.length === 0}>
         <section class="empty-state">
           <h3>No contacts yet</h3>
@@ -49,7 +94,14 @@ export function ContactsListPage(props) {
       <Show when={!contacts.loading && !contacts.error && (contacts()?.length ?? 0) > 0}>
         <ul class="contact-list">
           <For each={contacts()}>
-            {(contact) => <ContactListItem contact={contact} />}
+            {(contact) => (
+              <ContactListItem
+                contact={contact}
+                deleting={deletingContactId() === contact.id}
+                onDelete={deleteContact}
+                onEdit={(contactId) => props.navigate(`/edit/${encodeURIComponent(contactId)}`)}
+              />
+            )}
           </For>
         </ul>
       </Show>

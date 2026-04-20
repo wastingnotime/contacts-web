@@ -1,5 +1,6 @@
 import { Show, createSignal } from "solid-js";
 
+import { ContactFormFields } from "../components/ContactFormFields";
 import { createEmptyContactDraft, validateContactDraft } from "../models/contact";
 
 export function CreateContactPage(props) {
@@ -52,41 +53,12 @@ export function CreateContactPage(props) {
       </div>
 
       <form class="contact-form" onSubmit={submit}>
-        <label>
-          <span>First name</span>
-          <input
-            name="firstName"
-            value={draft().firstName}
-            onInput={(event) => updateField("firstName", event.currentTarget.value)}
-          />
-          <Show when={errors().firstName}>
-            <p class="field-error">{errors().firstName}</p>
-          </Show>
-        </label>
-
-        <label>
-          <span>Last name</span>
-          <input
-            name="lastName"
-            value={draft().lastName}
-            onInput={(event) => updateField("lastName", event.currentTarget.value)}
-          />
-          <Show when={errors().lastName}>
-            <p class="field-error">{errors().lastName}</p>
-          </Show>
-        </label>
-
-        <label>
-          <span>Phone number</span>
-          <input
-            name="phoneNumber"
-            value={draft().phoneNumber}
-            onInput={(event) => updateField("phoneNumber", event.currentTarget.value)}
-          />
-          <Show when={errors().phoneNumber}>
-            <p class="field-error">{errors().phoneNumber}</p>
-          </Show>
-        </label>
+        <ContactFormFields
+          draft={draft()}
+          errors={errors()}
+          disabled={isSubmitting()}
+          onFieldChange={updateField}
+        />
 
         <Show when={formError()}>
           <div class="error-banner" role="alert">
@@ -96,9 +68,8 @@ export function CreateContactPage(props) {
 
         <button
           class="primary-button"
-          type="button"
+          type="submit"
           disabled={isSubmitting()}
-          onClick={submit}
         >
           {isSubmitting() ? "Saving..." : "Save contact"}
         </button>
