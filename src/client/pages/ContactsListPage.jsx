@@ -17,14 +17,36 @@ function ContactListItem(props) {
         >
           Edit
         </button>
-        <button
-          class="ghost-button danger-button"
-          type="button"
-          disabled={props.deleting}
-          onClick={() => props.onDelete(props.contact.id)}
-        >
-          {props.deleting ? "Deleting..." : "Delete"}
-        </button>
+        <Show when={!props.confirmationActive} fallback={
+          <div class="delete-confirmation">
+            <p role="status">Confirm delete?</p>
+            <div class="form-actions">
+              <button
+                class="danger-button"
+                type="button"
+                onClick={() => props.onConfirmDelete(props.contact.id)}
+              >
+                {props.deleting ? "Deleting..." : "Confirm delete"}
+              </button>
+              <button
+                class="ghost-button"
+                type="button"
+                onClick={props.onCancelDelete}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        }>
+          <button
+            class="ghost-button danger-button"
+            type="button"
+            disabled={props.deleting}
+            onClick={() => props.onDelete(props.contact.id)}
+          >
+            Delete
+          </button>
+        </Show>
       </div>
     </li>
   );
@@ -33,6 +55,7 @@ function ContactListItem(props) {
 export function ContactsListPage(props) {
   const [deleteError, setDeleteError] = createSignal("");
   const [deletingContactId, setDeletingContactId] = createSignal("");
+  const [deleteConfirmationContactId, setDeleteConfirmationContactId] = createSignal("");
   const [contacts, { refetch }] = createResource(
     () => props.apiClient,
     (apiClient) => apiClient.listContacts(),
@@ -41,6 +64,7 @@ export function ContactsListPage(props) {
   const deleteContact = async (contactId) => {
     setDeleteError("");
     setDeletingContactId(contactId);
+    setDeleteConfirmationContactId("");
     try {
       await props.apiClient.deleteContact(contactId);
       await refetch();
@@ -53,6 +77,15 @@ export function ContactsListPage(props) {
     } finally {
       setDeletingContactId("");
     }
+  };
+
+  const confirmDelete = (contactId) => {
+    setDeleteError("");
+    setDeleteConfirmationContactId(contactId);
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirmationContactId("");
   };
 
   return (
@@ -100,7 +133,10 @@ export function ContactsListPage(props) {
               <ContactListItem
                 contact={contact}
                 deleting={deletingContactId() === contact.id}
-                onDelete={deleteContact}
+                confirmationActive={deleteConfirmationContactId() === contact.id}
+                onCancelDelete={cancelDelete}
+                onConfirmDelete={deleteContact}
+                onDelete={confirmDelete}
                 onEdit={(contactId) => props.navigate(`/edit/${encodeURIComponent(contactId)}`)}
               />
             )}

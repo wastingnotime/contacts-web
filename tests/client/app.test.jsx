@@ -251,10 +251,58 @@ describe("App", () => {
 
     await screen.findByText("Ada Lovelace");
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm delete" }));
 
     await waitFor(() => {
       expect(screen.getByText("No contacts yet")).toBeInTheDocument();
     });
+    expect(apiClient.calls).toEqual([
+      { type: "list" },
+      { type: "delete", contactId: "contact-1" },
+      { type: "list" },
+    ]);
+  });
+
+  it("asks for delete confirmation before removing a contact", async () => {
+    const apiClient = createStubApiClient([
+      {
+        id: "contact-1",
+        firstName: "Ada",
+        lastName: "Lovelace",
+        phoneNumber: "555-0001",
+      },
+    ]);
+
+    mountApp(apiClient, "/");
+
+    await screen.findByText("Ada Lovelace");
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Confirm delete?");
+    expect(apiClient.calls).toEqual([{ type: "list" }]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+    expect(apiClient.calls).toEqual([{ type: "list" }]);
+  });
+
+  it("confirms delete after the browser asks for confirmation", async () => {
+    const apiClient = createStubApiClient([
+      {
+        id: "contact-1",
+        firstName: "Ada",
+        lastName: "Lovelace",
+        phoneNumber: "555-0001",
+      },
+    ]);
+
+    mountApp(apiClient, "/");
+
+    await screen.findByText("Ada Lovelace");
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm delete" }));
+
+    await screen.findByText("No contacts yet");
     expect(apiClient.calls).toEqual([
       { type: "list" },
       { type: "delete", contactId: "contact-1" },
@@ -280,6 +328,7 @@ describe("App", () => {
 
     await screen.findByText("Ada Lovelace");
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm delete" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "You are not allowed to access contacts right now.",

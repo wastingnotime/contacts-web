@@ -156,6 +156,11 @@ input {
   justify-content: flex-start;
 }
 
+.delete-confirmation {
+  display: grid;
+  gap: 0.5rem;
+}
+
 .contact-form {
   display: grid;
   gap: 1rem;
