@@ -113,7 +113,7 @@ jobs:
         run: |
           git switch -c "$BRANCH_NAME"
 
-          env IMAGE_URI="$IMAGE_URI" perl -0pi -e 's@    image: \$\{CONTACTS_WEB_IMAGE\}\n@    image: $ENV{IMAGE_URI}\n@' \
+          env IMAGE_URI="$IMAGE_URI" perl -0pi -e 's@(?m)^    image: .*$@    image: $ENV{IMAGE_URI}@' \
             terraform/environments/production/swarm/stacks/contacts-web.yml
 
           perl -0pi -e 's@  contacts-web\.yml\)\n    require_var "CONTACTS_WEB_IMAGE"\n    ;;\n@  contacts-web.yml)\n    ;;\n@' \
