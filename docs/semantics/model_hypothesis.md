@@ -15,6 +15,7 @@ Use it during `extract`, `refine`, and `build` to define vocabulary, boundaries,
 - frozen legacy repository: `/home/henrique/repos/github/wastingnotime/contacts`
 - current backend repository: `/home/henrique/repos/github/wastingnotime/contacts-v2`
 - primary evidence inventory: `work/sources/contacts_web_reference_inventory.md`
+- backend contract inventory: `work/sources/contacts_v2_api_contract_inventory.md`
 
 ## Current Hypothesis
 
@@ -30,6 +31,25 @@ The extracted evidence suggests the initial workflow remains narrow on purpose:
 - update a contact
 - delete a contact
 
+The current backend contract from `contacts-v2` is a narrow admin CRUD API with explicit transport and auth rules:
+
+- `GET /healthz` returns a simple health payload
+- `POST /contacts` creates a contact and returns `201` with a `Location` header
+- `GET /contacts` lists all contacts
+- `GET /contacts/{id}` fetches one contact
+- `PUT /contacts/{id}` updates one contact
+- `DELETE /contacts/{id}` deletes one contact
+- the runtime also exposes `GET /events` as a diagnostic event log surface
+- request payloads use `snake_case` field names: `first_name`, `last_name`, and `phone_number`
+- update payloads may include `id`, but the path ID is authoritative and mismatches are rejected
+- create rejects exact duplicates of normalized `first_name`, `last_name`, and `phone_number`
+- phone numbers are normalized before storage and empty normalized values are rejected
+- all CRUD routes require admin claims; non-admin claims receive `403`
+- missing records return `404`
+- validation failures return `400`
+- duplicate creates return `409`
+- the runtime listens on `0.0.0.0:8010` by default
+
 The historical UI implemented that workflow in Mithril plus Redux. The current direction for this repository is to preserve the workflow while intentionally changing the web stack to Solid.
 
 ## Repository Role
@@ -38,6 +58,7 @@ The historical UI implemented that workflow in Mithril plus Redux. The current d
 - translate contact workflows into browser routes, form interactions, and backend API calls
 - preserve user-facing behavior separately from backend implementation details
 - validate how the `contacts` experience should feel on the web before introducing broader product scope
+- map the current frontend-friendly contract to the backend's snake_case HTTP shape without leaking transport details into UI state
 
 ## Boundary And Relationships
 
@@ -62,6 +83,7 @@ The historical UI implemented that workflow in Mithril plus Redux. The current d
 - `contacts-v2` currently acts as the backend/API reference
 - `contacts-web` should consume backend capabilities rather than re-own CRUD business rules
 - the web app may shape request payloads, validation messages, and interaction flow, but domain invariants ultimately need a backend authority
+- the web app likely needs a named adapter boundary between UI models and the `contacts-v2` HTTP contract
 
 ## Core Concepts
 
@@ -72,6 +94,7 @@ The historical UI implemented that workflow in Mithril plus Redux. The current d
 - `ContactListView`: route state that shows all known contacts
 - `ContactFormView`: route state that creates or edits one contact
 - `BackendContract`: the HTTP API consumed by the web app
+- `AuthClaims`: request headers or session-derived claims that determine whether the backend will authorize the action
 
 ## Observed Workflow Shape
 
@@ -106,6 +129,7 @@ The current model assumes these flows still matter even though the implementatio
 - the legacy implementation is valuable as workflow evidence, but not as stack direction
 - the backend lineage is moving from legacy camelCase payloads toward `contacts-v2` snake_case payloads
 - the web app likely needs an anti-corruption boundary between UI language and backend transport language
+- the backend now has explicit response semantics for auth, validation, missing records, duplicates, and health checks
 
 ## Likely UI State Model
 
@@ -125,3 +149,4 @@ The current model assumes these flows still matter even though the implementatio
 - The current extracted workflow has no search, sort, filtering, pagination, or richer contact fields.
 - The list currently deletes directly from the index view; confirmation, undo, or safer destructive interaction is not yet defined.
 - The exact ownership of validation is unresolved: the browser may validate for usability, but authoritative rejection must remain aligned with the backend.
+- The backend exposes a diagnostic `/events` route, but it is not yet clear whether the web app should treat it as a contract dependency or ignore it as an internal runtime aid.

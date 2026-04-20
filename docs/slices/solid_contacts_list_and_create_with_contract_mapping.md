@@ -46,6 +46,16 @@ Included in this slice:
 - map UI contact fields to backend transport fields explicitly
 - represent loading, success, and failure states for list and create flows
 
+Contract map for this slice:
+
+- UI model fields use `camelCase`: `firstName`, `lastName`, `phoneNumber`
+- backend transport fields use `snake_case`: `first_name`, `last_name`, `phone_number`
+- the adapter must map list payloads from backend transport objects into UI contact view models
+- the adapter must map create drafts from UI form state into backend create payloads
+- the adapter must treat auth as an explicit request concern rather than hiding it in page components
+- the adapter should surface backend `400`, `403`, `404`, and `409` failures as distinct user-facing states when possible
+- health checks are a runtime concern, not a UI state concern
+
 Excluded from this slice:
 
 - edit existing contact
@@ -65,6 +75,12 @@ This is the smallest slice that resolves the main tensions discovered during `ex
 - it introduces the backend contract adapter where camelCase UI language and snake_case backend transport already diverge
 - it gives the repository a real browser-facing workflow without prematurely expanding to full CRUD
 - it creates a concrete base for later edit, delete, auth, and richer error-handling slices
+
+The contract map is intentionally narrow:
+
+- it covers only list and create behavior
+- it treats edit/delete as future reuse of the same adapter boundary rather than as separate transport systems
+- it keeps the browser-facing state model small enough to test deterministically
 
 Starting with architecture-document cleanup alone would still leave the implementation boundary undefined.
 Starting with full CRUD would widen scope before the transport seam and route conventions are proven.
@@ -108,6 +124,49 @@ Failure conditions:
 - backend rejects the request as duplicate
 - backend is unavailable or returns an unexpected failure
 
+### Contract Map: `ContactsApiClient`
+
+Methods:
+
+- `list_contacts()`
+- `create_contact(draft)`
+
+Expected backend inputs and outputs:
+
+- `list_contacts()` receives backend contact objects with `snake_case` fields
+- `create_contact(draft)` sends `snake_case` fields and receives a created contact object
+- create responses may include an identifier and can be used to return the app to a coherent list state
+
+Failure surface:
+
+- request validation failure
+- authorization failure
+- not found is not expected for list/create, but the adapter should still preserve the category for future routes
+- duplicate create failure
+- transport or unexpected contract mismatch
+
+### Contract Map: `ContactTransportMapper`
+
+UI to backend:
+
+- `firstName` -> `first_name`
+- `lastName` -> `last_name`
+- `phoneNumber` -> `phone_number`
+
+Backend to UI:
+
+- `id` -> `id`
+- `first_name` -> `firstName`
+- `last_name` -> `lastName`
+- `phone_number` -> `phoneNumber`
+
+Error mapping:
+
+- `400` -> validation or invalid payload feedback
+- `403` -> authorization or access denied feedback
+- `409` -> duplicate contact feedback
+- unexpected shapes -> adapter failure visible to the user instead of silent coercion
+
 ## Main Business Rules
 
 - the browser uses experience-language field names internally: `firstName`, `lastName`, `phoneNumber`
@@ -116,6 +175,7 @@ Failure conditions:
 - the empty state must still offer a path to create the first contact
 - create must not silently discard user input on failure
 - the first slice must prefer clear, deterministic user feedback over optimistic behavior
+- auth concerns remain explicit and should not be collapsed into a generic page-level error bucket
 
 ## Client Model Shape Hypothesis
 
@@ -126,6 +186,7 @@ Expected initial concepts:
 - `ContactTransportMapper`
 - `ContactsApiClient` or equivalent backend gateway
 - route-level page states for list and create
+- request status variants for loading, empty, success, validation failure, duplicate failure, auth failure, and unexpected failure
 
 Possible supporting concepts if useful during build:
 
@@ -145,6 +206,8 @@ The slice should avoid introducing a heavy client domain model unless it clarifi
   - map backend error shapes into user-facing categories when possible
 - route/navigation boundary
   - move between list and create views deterministically
+- auth-claim boundary
+  - obtain or proxy claims for backend requests without hard-coding page-level assumptions
 
 Optional port:
 
@@ -166,6 +229,8 @@ The interface should make these states explicit:
 - create form idle
 - create form submitting
 - create form validation or backend failure
+- authorization failure
+- duplicate failure
 
 ## Initial Test Plan
 
@@ -177,6 +242,7 @@ Client tests should specify:
 - the create route validates required fields before sending a request
 - create sends a snake_case backend payload through the adapter
 - backend validation or duplicate failure keeps the user on the form with visible feedback
+- authorization failure is surfaced distinctly from validation failure
 - successful create returns the user to a coherent list state
 
 Contract-focused tests should specify:
@@ -184,6 +250,7 @@ Contract-focused tests should specify:
 - backend list payloads in `snake_case` are mapped to UI models in `camelCase`
 - UI drafts in `camelCase` are mapped to backend create payloads in `snake_case`
 - unknown payload shapes fail clearly instead of being accepted silently
+- backend error categories are preserved rather than collapsed into a single generic failure
 
 ## Scenario Definition
 
@@ -218,6 +285,7 @@ Scenario steps:
 - do not collapse transport mapping into UI components
 - if a shared store is introduced, it should stay small and workflow-focused rather than becoming a generic app-state container
 - update root architecture guidance only as much as needed to stop contradicting the selected Solid frontend direction
+- keep auth handling at the boundary, not hidden inside page components
 
 ## Notes For Later Phases
 

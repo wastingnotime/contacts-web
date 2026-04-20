@@ -67,6 +67,11 @@ Observed differences already matter for frontend evaluation:
 - `contacts-v2` uses `first_name`, `last_name`, and `phone_number`
 - `contacts-v2` adds auth expectations and richer error signaling than the legacy browser app modeled
 - the backend may return not-found, validation, authorization, or duplicate responses that the old UI did not treat distinctly
+- the backend currently exposes a simple health route, a diagnostic event route, and stable CRUD resource routes under `/contacts`
+- create returns `201 Created` and a `Location` header, which the web app can use for route transitions or confirmations
+- update treats the path ID as authoritative and rejects mismatched body IDs
+- phone values are normalized on the backend, so the UI should not assume verbatim persistence of formatting characters
+- auth is claims-based in the current runtime, so the web app needs a deliberate plan for how claims are supplied or proxied
 
 This repository therefore likely needs a contract-mapping layer rather than letting backend transport naming leak directly into every component.
 
@@ -79,6 +84,7 @@ This repository therefore likely needs a contract-mapping layer rather than lett
 - loading and empty states
 - mutation feedback after create, update, and delete
 - transport adapters between UI models and backend payloads
+- auth claim plumbing or a deliberate abstraction over it
 
 ## Industry Language Worth Preserving
 
@@ -104,6 +110,7 @@ This repository therefore likely needs a contract-mapping layer rather than lett
 - treating the legacy Mithril structure as if it were a domain constraint
 - treating backend admin assumptions as if they automatically define the web experience role
 - preserving starter-repo backend architecture guidance inside a frontend repository for too long
+- assuming the backend will preserve the exact formatting typed by the user for phone numbers
 
 ## Specific Gaps Observed In The Reference Baseline
 
