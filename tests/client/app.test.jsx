@@ -39,7 +39,7 @@ function createStubApiClient(initialContacts = []) {
       if (!contact) {
         throw {
           code: "not_found",
-          message: "That contact could not be found.",
+          message: "That contact no longer exists.",
         };
       }
       return { ...contact };
@@ -53,7 +53,7 @@ function createStubApiClient(initialContacts = []) {
       if (index < 0) {
         throw {
           code: "not_found",
-          message: "That contact could not be found.",
+          message: "That contact no longer exists.",
         };
       }
       const updated = {
@@ -72,7 +72,7 @@ function createStubApiClient(initialContacts = []) {
       if (index < 0) {
         throw {
           code: "not_found",
-          message: "That contact could not be found.",
+          message: "That contact no longer exists.",
         };
       }
       state.contacts.splice(index, 1);
@@ -309,7 +309,7 @@ describe("App", () => {
     ]);
     apiClient.state.updateError = {
       code: "not_found",
-      message: "That contact could not be found.",
+      message: "That contact no longer exists.",
     };
 
     mountApp(apiClient, "/edit/contact-1");
@@ -320,7 +320,7 @@ describe("App", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("That contact could not be found.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("That contact no longer exists.");
     expect(screen.getByRole("heading", { name: "Edit contact" })).toBeInTheDocument();
   });
 
@@ -451,6 +451,32 @@ describe("App", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "You are not allowed to access contacts right now.",
+    );
+    expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
+  });
+
+  it("shows a missing-record message when delete targets a removed contact", async () => {
+    const apiClient = createStubApiClient([
+      {
+        id: "contact-1",
+        firstName: "Ada",
+        lastName: "Lovelace",
+        phoneNumber: "555-0001",
+      },
+    ]);
+    apiClient.state.deleteError = {
+      code: "not_found",
+      message: "That contact no longer exists.",
+    };
+
+    mountApp(apiClient, "/");
+
+    await screen.findByText("Ada Lovelace");
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm delete" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "That contact no longer exists.",
     );
     expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
   });

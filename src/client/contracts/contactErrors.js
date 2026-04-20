@@ -3,7 +3,13 @@ export function getContactErrorMessage(error, fallbackMessage) {
     if (error.code === "authorization") {
       return "You are not allowed to access contacts right now.";
     }
-    if (error.code === "validation" || error.code === "duplicate" || error.code === "not_found") {
+    if (error.code === "duplicate") {
+      return "A contact with this data already exists.";
+    }
+    if (error.code === "not_found") {
+      return "That contact no longer exists.";
+    }
+    if (error.code === "validation") {
       return error.message || fallbackMessage;
     }
   }
