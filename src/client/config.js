@@ -1,9 +1,13 @@
-export const DEFAULT_CONTACTS_API_BASE_URL = "http://0.0.0.0:8010";
+export const DEFAULT_CONTACTS_API_BASE_URL = "/api";
 export const DEFAULT_CONTACTS_API_AUTH_SUBJECT = "admin-user";
 export const DEFAULT_CONTACTS_API_AUTH_ROLES = "admin";
 
+export function resolveContactsApiBaseUrl(value) {
+  return value || DEFAULT_CONTACTS_API_BASE_URL;
+}
+
 export function getContactsApiBaseUrl() {
-  return import.meta.env.VITE_CONTACTS_API_BASE_URL || DEFAULT_CONTACTS_API_BASE_URL;
+  return resolveContactsApiBaseUrl(import.meta.env.VITE_CONTACTS_API_BASE_URL);
 }
 
 export function getContactsApiAuthSubject() {
