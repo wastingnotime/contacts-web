@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
+import { fireEvent, render, screen, waitFor, within } from "@solidjs/testing-library";
 
 import { App } from "../../src/client/App";
 
@@ -37,10 +37,9 @@ function createStubApiClient(initialContacts = []) {
       }
       const contact = state.contacts.find((item) => item.id === contactId);
       if (!contact) {
-        throw {
-          code: "not_found",
-          message: "That contact no longer exists.",
-        };
+        const error = new Error("That contact no longer exists.");
+        error.code = "not_found";
+        throw error;
       }
       return { ...contact };
     },
@@ -227,6 +226,7 @@ describe("App", () => {
 
     expect(await screen.findByRole("status")).toHaveTextContent("Loading contact...");
     expect(await screen.findByRole("heading", { name: "Edit contact" })).toBeInTheDocument();
+    await screen.findByRole("textbox", { name: /last name/i });
 
     expect(screen.getByRole("textbox", { name: /first name/i })).toHaveValue("Ada");
     expect(screen.getByRole("textbox", { name: /last name/i })).toHaveValue("Lovelace");
@@ -258,6 +258,15 @@ describe("App", () => {
     ]);
   });
 
+  it("shows a missing-record state when the edit target no longer exists", async () => {
+    const apiClient = createStubApiClient();
+    mountApp(apiClient, "/edit/contact-1");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Contact no longer exists");
+    expect(within(screen.getByRole("alert")).getByRole("button", { name: "Back to list" })).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: /first name/i })).not.toBeInTheDocument();
+  });
+
   it("shows a pending state while contact editing is in flight", async () => {
     const deferred = createDeferred();
     const apiClient = createStubApiClient([
@@ -282,6 +291,7 @@ describe("App", () => {
     mountApp(apiClient, "/edit/contact-1");
 
     await screen.findByRole("heading", { name: "Edit contact" });
+    await screen.findByRole("textbox", { name: /last name/i });
     fireEvent.input(screen.getByRole("textbox", { name: /last name/i }), {
       target: { value: "Byron" },
     });
@@ -315,6 +325,7 @@ describe("App", () => {
     mountApp(apiClient, "/edit/contact-1");
 
     await screen.findByRole("heading", { name: "Edit contact" });
+    await screen.findByRole("textbox", { name: /last name/i });
     fireEvent.input(screen.getByRole("textbox", { name: /last name/i }), {
       target: { value: "Byron" },
     });
@@ -578,6 +589,7 @@ describe("App", () => {
     mountApp(apiClient, "/edit/contact-1");
 
     await screen.findByRole("heading", { name: "Edit contact" });
+    await screen.findByRole("textbox", { name: /last name/i });
     fireEvent.input(screen.getByRole("textbox", { name: /last name/i }), {
       target: { value: "Byron" },
     });

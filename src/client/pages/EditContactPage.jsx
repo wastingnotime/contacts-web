@@ -16,12 +16,24 @@ export function EditContactPage(props) {
 
   const [contact] = createResource(
     () => props.contactId,
-    (contactId) => props.apiClient.getContact(contactId),
+    async (contactId) => {
+      try {
+        return await props.apiClient.getContact(contactId);
+      } catch (error) {
+        if (error && typeof error === "object" && error.code === "not_found") {
+          return {
+            missingRecord: true,
+          };
+        }
+
+        throw error;
+      }
+    },
   );
 
   createEffect(() => {
     const loadedContact = contact();
-    if (loadedContact) {
+    if (loadedContact && !loadedContact.missingRecord) {
       setDraft(createContactDraftFromViewModel(loadedContact));
       setErrors({});
       setFormError("");
@@ -76,13 +88,23 @@ export function EditContactPage(props) {
         <p role="status">Loading contact...</p>
       </Show>
 
+      <Show when={contact()?.missingRecord}>
+        <section class="empty-state" role="alert">
+          <h3>Contact no longer exists</h3>
+          <p>The edit route is stale or the contact has already been removed.</p>
+          <button class="secondary-button" type="button" onClick={() => props.navigate("/")}>
+            Back to list
+          </button>
+        </section>
+      </Show>
+
       <Show when={contact.error}>
         <div class="error-banner" role="alert">
           {getContactErrorMessage(contact.error)}
         </div>
       </Show>
 
-      <Show when={!contact.loading && !contact.error && contact()}>
+      <Show when={!contact.loading && !contact.error && contact() && !contact()?.missingRecord}>
         <form class="contact-form" onSubmit={submit}>
           <ContactFormFields
             draft={draft()}
