@@ -2,9 +2,10 @@ import { render } from "solid-js/web";
 
 import { App } from "./App";
 import { HttpContactsApiClient } from "./api/httpContactsApiClient";
+import { getContactsApiBaseUrl } from "./config";
 
 const apiClient = new HttpContactsApiClient({
-  baseUrl: "",
+  baseUrl: getContactsApiBaseUrl(),
   fetchFn: window.fetch.bind(window),
 });
 
