@@ -106,3 +106,30 @@ Keep `.codex` as a first-class part of the repository workflow immediately. This
 
 ### Notes
 If future evidence shows that MRL depends on stable capabilities from a specific AI tool, record a follow-up decision describing the required coupling, why generic artifacts were insufficient, and which tool-specific assets should become part of the repository.
+
+## DEC-0004 - Treat Storybook As A Local Preview Runtime
+
+- Date: 2026-04-21
+- Status: accepted
+- Owners: both
+
+### Context
+The contacts frontend needs a lightweight way to inspect form and list states without starting the full app or contacting the backend. The repository already uses isolated mode for backend-free app execution, but that path still includes the application shell and router.
+
+### Decision
+Add Storybook as a separate local preview runtime for inspecting contact UI states. Storybook should load the existing Solid UI, use deterministic local fixtures, and remain separate from the live contacts backend path and from the main app bootstrap.
+
+### Consequences
+Component and page states become easier to review in isolation. The repository now has three clearly separate execution surfaces:
+
+- the live app
+- isolated backend-free app execution
+- Storybook preview
+
+That separation improves inspection and communication, but it also requires keeping preview fixtures and shared styles in sync with the application UI.
+
+### Alternatives considered
+Rely only on the isolated app runtime for previewing states. This was rejected because the app shell and router add noise when the goal is to inspect a component or page state directly.
+
+### Notes
+Keep Storybook backend-free. Prefer local fixtures over reaching into the live bootstrap path. Keep generated `storybook-static/` output out of version control.

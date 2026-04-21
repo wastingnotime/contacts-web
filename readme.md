@@ -122,6 +122,12 @@ To start the app in isolated mode without a live backend:
 VITE_CONTACTS_UI_MODE=isolated npm run dev
 ```
 
+To inspect contact UI states in Storybook:
+
+```bash
+npm run storybook
+```
+
 ---
 
 ## Repository Notes
