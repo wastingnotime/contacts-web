@@ -12,6 +12,7 @@
 - added a visible runtime badge to the app shell
 - kept the live HTTP client path intact
 - added tests for runtime mode selection and isolated-mode app bootstrapping
+- added direct contract tests for isolated-mode client determinism and CRUD behavior
 
 ## Behavior
 
