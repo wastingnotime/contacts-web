@@ -143,3 +143,28 @@ export function createDelayedStoryContactsApiClient({
     },
   };
 }
+
+export function createPageStoryContactsApiClient({
+  contacts = DEFAULT_CONTACTS,
+  delayMs = 0,
+  missingContactId = null,
+} = {}) {
+  const baseClient = createStoryContactsApiClient({ contacts });
+
+  return {
+    ...baseClient,
+    async getContact(contactId) {
+      if (delayMs > 0) {
+        await new Promise((resolve) => {
+          setTimeout(resolve, delayMs);
+        });
+      }
+
+      if (missingContactId && contactId === missingContactId) {
+        throw new ContactApiError("That contact could not be found.", "not_found");
+      }
+
+      return baseClient.getContact(contactId);
+    },
+  };
+}
