@@ -1,90 +1,125 @@
-# MRL Starter
+# Contacts Web
 
-## Purpose
+## Overview
 
-This repository is a starter template for the Model Refinement Lab.
+`contacts-web` is the browser front-end for the `contacts` app.
 
-Use it to begin a new repository that follows the MRL loop:
+It provides the user-facing contact workflows for the current backend boundary, with a focus on:
+
+- browsing the contacts list
+- creating a contact
+- editing an existing contact
+- deleting a contact
+- presenting loading, empty, success, and failure states clearly
+- translating the browser model into the backend HTTP contract
+
+This repository is intentionally a web experience surface, not the source of truth for contacts data.
+
+---
+
+## What This Repository Is
+
+`contacts-web` is a Solid-based frontend that sits in front of the contacts backend, currently referenced by the local contract at `http://0.0.0.0:8010`.
+
+The app owns:
+
+- route-level UI behavior
+- form state and interaction flow
+- user-visible validation and error handling
+- backend request and response mapping
+- presentation decisions for the contacts experience
+
+The app does not own:
+
+- backend persistence
+- authoritative contact invariants
+- authorization implementation
+- deployment of the backend service
+
+---
+
+## Product Scope
+
+The current experience is intentionally narrow and practical:
+
+- show the contacts list
+- support a clear empty state
+- open a contact form in create mode
+- open a contact form in edit mode
+- submit create and update requests
+- delete a contact from the list
+- reflect backend failures without hiding user intent
+
+The current backend contract uses `snake_case` field names, so the frontend keeps an explicit mapping layer rather than leaking transport shape into the UI.
+
+---
+
+## Technical Shape
+
+The repository currently uses:
+
+- Solid for the browser UI
+- Vite for the development and build pipeline
+- Vitest and Testing Library for executable UI and contract tests
+
+The frontend code is organized around explicit contract and page modules rather than generic component blobs.
+
+---
+
+## Relationship To MRL
+
+MRL is the working method used in this repository, but it is not the main product story.
+
+The MRL loop is still the operational backbone:
 
 ```text
 extract -> refine -> build -> egd -> release -> expose -> living -> extract
 ```
 
-This starter separates:
-
-- MRL core: the artifact-driven refinement loop and workflow
-- implementation packs: selectable language and architecture defaults
-
-The repository currently includes `python_ddd_monolith` as the example selected pack. If you want another shape such as Go, TypeScript, event sourcing, or a multi-runtime client/server system, keep the MRL core and replace the pack guidance intentionally.
-
-One of the repository's main characteristics is that pre-defined packs can be used to scaffold new MRL projects. That lets adopters keep the same refinement workflow while starting from a language and architecture shape that already fits their context.
-
-MRL itself is AI-agent-friendly rather than tool-specific, but this starter is currently optimized for Codex-style repository workflows. It can still be used well with other AI coding agents when they operate from explicit repository artifacts instead of conversational memory.
-
----
-
-## Getting Started
-
-Clone the starter into the new repository name you want:
-
-```bash
-git clone <starter-url> my-new-project
-cd my-new-project
-```
-
-The preferred way to start a new project is to use this repository as a GitHub template, not as a fork. Forking is more appropriate when working on the starter itself or maintaining a derivative starter.
-
-Then read these files first:
+Use the workflow docs when you need the process details:
 
 - `docs/operating/mrl_reference.md`
 - `docs/operating/skills_workflow.md`
-- `docs/operating/packs.md`
-- `docs/operating/best_practices.md`
-- `docs/session_metrics.md`
-- `architecture.md`
-- `groundrules.md`
-- `docs/building/project_structure.md`
 
-Before writing substantial project-specific code, decide whether the adopting repository will keep the starter's default license or intentionally replace it with another license or a split-license model. Record that choice clearly in the root `LICENSE` and `decisions.md`.
+For the current app, the important point is simpler:
 
-Then start the loop:
-
-1. run `extract` to build the first semantic baseline in `docs/semantics/`
-2. run `refine` to define the first slice in `docs/slices/`
-3. run `build` to implement one vertical slice
-4. run `egd` to review the built behavior
-
-The semantic placeholders in `docs/semantics/` are intentionally empty. They are meant to be filled by the `extract` phase, not by copying domain content from this starter.
-Preserve original evidence in `work/sources/` before extraction or refinement artifacts are produced elsewhere.
-
-For repositories that expect to use `expose`, released artifacts should normally be packaged in a portable runtime form, with a container image as the default. That packaging rule belongs to MRL operating guidance rather than to any specific adopting repository's domain semantics.
+- MRL helps the repository evolve slice by slice
+- `contacts-web` remains the product-facing browser interface
+- product behavior should stay visible in the README before process detail does
 
 ---
 
-## Starter Layout
+## Current State
 
-```text
-.agents/skills/            # repo-local MRL skills
-/docs/operating/           # MRL model and workflow docs
-/docs/packs/               # implementation pack definitions
-/docs/building/            # structure and bootstrap guidance
-/docs/evaluation/          # expectation-gap evaluation guidance
-/docs/semantics/           # domain-specific meaning created by extract
-/docs/slices/              # one slice document per increment
-/work/sources/             # canonical folder for curated raw evidence and original source material
-/work/changes/             # request, impact, and implementation artifacts
-/src/                      # implementation root shaped by the selected pack
-/tests/                    # executable specification
+The repository already includes:
+
+- the Solid frontend scaffold under `src/client/`
+- browser pages for list, create, and edit flows
+- API and contract mapping modules
+- test coverage for client behavior and transport mapping
+- release and exposure notes under `work/changes/`
+
+The implementation is still early, but it is a real contacts UI rather than a starter template.
+
+---
+
+## Working Locally
+
+Install dependencies and run the app with the package scripts:
+
+```bash
+npm install
+npm run dev
+npm run test
+npm run build
 ```
 
+The local frontend is intended to talk to the contacts backend at `http://0.0.0.0:8010`.
+
 ---
 
-## Notes
+## Repository Notes
 
-- Treat this repository as a template, not as a finished application.
-- Keep domain specifics out of the starter and in the adopting repository.
-- Keep the MRL loop generic and move language or architecture assumptions into packs.
-- Make licensing an explicit adoption choice; the starter can be reused under one license or adapted into a split-license repository when process material and implementation code need different terms.
-- Treat `work/` as repository memory, not scratch space; preserve original evidence in `work/sources/` before downstream artifacts are created.
-- Use `docs/session_metrics.md` if you want lightweight tracking of session productivity and token efficiency while the repository evolves.
-- Prefer one small slice over broad scaffolding.
+- Keep the README focused on the contacts experience, not on the MRL starter history.
+- Record important structural or product decisions in `decisions.md`.
+- Preserve semantic and slice artifacts under `docs/` and `work/` as the repository evolves.
