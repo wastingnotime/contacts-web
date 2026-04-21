@@ -14,7 +14,6 @@ This slice adds an explicit isolated mode so the contacts UI can be exercised wi
 
 - Solid browser client runtime
 - deterministic mock transport boundary for isolated mode
-- optional local UI preview tooling such as Storybook
 
 Early-phase rule:
 
@@ -149,7 +148,6 @@ Possible supporting concepts if useful during build:
 
 - a local environment flag or startup configuration
 - an MSW-backed mock transport layer
-- a Storybook or preview entry point for component inspection
 
 The slice should avoid introducing a heavy environment system unless it clarifies behavior materially.
 
@@ -218,3 +216,4 @@ Scenario steps:
 - keep the mode boundary visible
 - do not let isolated mocks become the source of business truth
 - preserve the live contacts API client path
+- related follow-on slices now exist for MSW transport, startup failure handling, runtime smoke coverage, and fixture alignment

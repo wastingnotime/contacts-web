@@ -171,7 +171,6 @@ The slice should avoid introducing a heavy state-management system unless it cla
 
 Optional ports:
 
-- local preview tooling for UI inspection
 - committed MSW worker asset under `public/mockServiceWorker.js`
 
 ## Interface Expectations
@@ -233,3 +232,4 @@ Scenario steps:
 - do not let isolated mocks become the source of business truth
 - preserve the live contacts API client path
 - keep `public/mockServiceWorker.js` in sync with the MSW package version when dependencies change
+- related follow-on slices now exist for startup failure handling, runtime smoke coverage, and shared fixture alignment
