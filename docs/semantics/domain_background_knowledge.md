@@ -55,6 +55,7 @@ For a browser-facing contacts interface, correctness is not only about backend r
 - error recovery that does not silently discard user work
 - transport-model mapping when backend field names differ from UI language
 - deterministic isolated modes that let the UI be inspected without a live backend
+- integrated local modes that run the frontend with local services, seeded data, and real service interaction for contract validation and flow debugging
 
 Even a narrow CRUD frontend needs explicit choices for these behaviors or it will feel broken despite a correct backend.
 
@@ -68,6 +69,12 @@ An isolated mode typically helps when the team wants:
 - deterministic rendering and interaction checks
 - component inspection without backend setup
 - mock API responses that are stable across runs
+
+An integrated local mode typically helps when the team wants:
+
+- the frontend and backend to run locally together
+- seeded data to make end-to-end behavior reproducible
+- contract and flow validation against real service interaction
 
 The important boundary is that isolated-mode mocks should support UI development and specification, not quietly become a second source of business truth.
 
@@ -128,6 +135,7 @@ This repository therefore likely needs a contract-mapping layer rather than lett
 - assuming the backend will preserve the exact formatting typed by the user for phone numbers
 - treating isolated-mode mocks as if they were authoritative domain behavior
 - letting backend-free UI shortcuts diverge from the real contract without a clear boundary
+- treating an integrated local dev stack as a substitute for the external backend contract instead of a local validation surface
 
 ## Specific Gaps Observed In The Reference Baseline
 

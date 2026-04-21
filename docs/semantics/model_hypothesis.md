@@ -17,6 +17,7 @@ Use it during `extract`, `refine`, and `build` to define vocabulary, boundaries,
 - primary evidence inventory: `work/sources/contacts_web_reference_inventory.md`
 - backend contract inventory: `work/sources/contacts_v2_api_contract_inventory.md`
 - isolated mode note from `/home/henrique/Downloads/isolated_mode.md` describing a backend-free UI iteration path
+- integrated local mode note from `/home/henrique/Downloads/integrated_local_mode.md` describing a multi-service local development and integration path
 
 ## Current Hypothesis
 
@@ -54,6 +55,8 @@ The current backend contract from `contacts-v2` is a narrow admin CRUD API with 
 The historical UI implemented that workflow in Mithril plus Redux. The current direction for this repository is to preserve the workflow while intentionally changing the web stack to Solid.
 
 The isolated mode note adds a second pressure on the repository: the frontend should be easy to exercise without a live backend when the goal is UI iteration, edge-state inspection, or deterministic testing. That suggests an intentional local mode with mock API behavior and no backend dependency may be useful as an evaluation and development path, provided it stays separate from the contacts backend contract.
+
+The integrated local mode note adds a complementary pressure: the frontend should also be easy to exercise with real local service interaction when the goal is contract validation, flow debugging, or integration testing. That suggests a second intentional local mode that runs the frontend with a seeded backend and local database through Docker Compose, while still keeping it separate from the external production backend contract.
 
 ## Repository Role
 
@@ -134,6 +137,7 @@ The current model assumes these flows still matter even though the implementatio
 - the web app likely needs an anti-corruption boundary between UI language and backend transport language
 - the backend now has explicit response semantics for auth, validation, missing records, duplicates, and health checks
 - the repo may benefit from a backend-free isolated mode for faster UI development and deterministic edge-state inspection
+- the repo may also benefit from an integrated local mode that runs the frontend against a locally orchestrated seeded backend for contract and flow validation
 - testability pressure may justify a mock-driven mode that exercises pages and states without depending on the contacts backend
 
 ## Likely UI State Model
@@ -144,6 +148,7 @@ The current model assumes these flows still matter even though the implementatio
 - request status state such as idle, loading, submitting, succeeded, failed
 - user-visible error state scoped to route or form
 - isolated-mode state that selects between live backend behavior and deterministic mock behavior
+- integrated-local-mode state that selects a full local service stack for real interaction and integration testing
 
 ## Unresolved Tensions And Ambiguities
 
@@ -158,3 +163,5 @@ The current model assumes these flows still matter even though the implementatio
 - The backend exposes a diagnostic `/events` route, but it is not yet clear whether the web app should treat it as a contract dependency or ignore it as an internal runtime aid.
 - The repository does not yet define whether backend-free isolated mode is a first-class development/test path or only an ad hoc local convenience.
 - If isolated mode becomes explicit, the boundary between live contract tests and mock-driven UI tests needs to stay clear so the two modes do not drift into one another.
+- The repository does not yet define how an integrated local mode should relate to the isolated mode, the live backend contract, or the existing local dev command surface.
+- If integrated local mode becomes explicit, the boundary between real local service validation and external backend authority needs to stay clear so the two modes do not drift into one another.
