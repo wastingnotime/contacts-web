@@ -168,3 +168,24 @@ export function createPageStoryContactsApiClient({
     },
   };
 }
+
+export function createPendingStoryContactsApiClient({
+  contacts = DEFAULT_CONTACTS,
+} = {}) {
+  const baseClient = createStoryContactsApiClient({ contacts });
+  const pendingPromise = new Promise(() => {});
+
+  return {
+    ...baseClient,
+    async createContact(draft) {
+      pendingPromise.catch(() => {});
+      await pendingPromise;
+      return baseClient.createContact(draft);
+    },
+    async updateContact(contactId, draft) {
+      pendingPromise.catch(() => {});
+      await pendingPromise;
+      return baseClient.updateContact(contactId, draft);
+    },
+  };
+}
