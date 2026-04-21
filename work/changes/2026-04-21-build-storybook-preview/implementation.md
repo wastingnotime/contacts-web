@@ -10,6 +10,7 @@
 - added `storybook` and `build-storybook` npm scripts
 - added `.storybook/main.js`
 - added `.storybook/preview.jsx` with shared app styles and a layout decorator
+- added deterministic story fixtures for `App` shell states
 - added deterministic story fixtures for `ContactFormFields`
 - added deterministic story fixtures for `ContactsListPage`
 - added a reusable story-only contacts API client helper
@@ -21,7 +22,7 @@
 
 - Storybook starts as a separate local preview runtime
 - stories render without contacting the live backend
-- component and page states can be inspected deterministically
+- shell, component, and page states can be inspected deterministically
 - shared app styling applies inside the preview frame
 
 ## Validation

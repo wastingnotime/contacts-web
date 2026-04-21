@@ -24,7 +24,7 @@ function routeFromPath(pathname) {
 }
 
 export function App(props) {
-  const [path, setPath] = createSignal(currentPath());
+  const [path, setPath] = createSignal(props.initialPath ?? currentPath());
 
   const handlePopState = () => {
     setPath(currentPath());

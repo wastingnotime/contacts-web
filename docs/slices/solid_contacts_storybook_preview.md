@@ -40,6 +40,7 @@ Included in this slice:
 
 - add Storybook configuration for the Solid/Vite app
 - load the existing app styles in the preview frame
+- add a shell preview for the app header and runtime badge
 - add deterministic stories for contact form fields
 - add deterministic stories for the contacts list page
 - add deterministic stories for create and edit page states
@@ -117,6 +118,7 @@ Failure conditions:
 
 Target preview modules:
 
+- app shell and runtime badge
 - contact form fields
 - contacts list page
 - optional create or edit page previews if needed to keep the inspection surface coherent
@@ -162,6 +164,7 @@ Optional ports:
 
 The preview surface should support inspection of:
 
+- app shell layout and runtime badge states
 - contact form field states
 - contacts list states
 - create page states
@@ -183,6 +186,8 @@ Build validation should specify:
 
 Story previews should specify:
 
+- app shell layout renders with the same header chrome as the app
+- runtime badge state is visible for live and isolated preview variants
 - form fields render with values and errors
 - contacts list renders with deterministic data, empty state, loading state, and failure state
 - create and edit pages render with deterministic backend-free fixtures
@@ -207,6 +212,7 @@ Scenario steps:
 ## Done Criteria
 
 - Storybook starts for the Solid app
+- the app shell and runtime badge are visible in Storybook
 - contact UI states are visible in Storybook
 - preview stories are deterministic
 - Storybook stays separate from the live backend path

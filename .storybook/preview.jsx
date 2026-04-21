@@ -1,12 +1,13 @@
 import { createJSXDecorator } from "storybook-solidjs-vite";
 
+import "./preview.css";
 import "../src/client/styles.css";
 
 export const decorators = [
   createJSXDecorator((Story) => (
-    <main class="app-shell">
+    <div class="storybook-shell">
       <Story />
-    </main>
+    </div>
   )),
 ];
 

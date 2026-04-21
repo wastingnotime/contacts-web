@@ -92,12 +92,10 @@ function createDeferred() {
 }
 
 function mountApp(apiClient, path = "/") {
-  window.history.pushState({}, "", path);
-  return render(() => <App apiClient={apiClient} runtimeMode="live" />);
+  return render(() => <App apiClient={apiClient} runtimeMode="live" initialPath={path} />);
 }
 
 function mountIsolatedApp(path = "/") {
-  window.history.pushState({}, "", path);
   return render(() => (
     <App
       apiClient={createContactsApiClient({
@@ -105,6 +103,7 @@ function mountIsolatedApp(path = "/") {
         fetchFn: window.fetch.bind(window),
       })}
       runtimeMode="isolated"
+      initialPath={path}
     />
   ));
 }
