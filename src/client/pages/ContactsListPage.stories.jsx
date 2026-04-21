@@ -1,5 +1,8 @@
 import { ContactsListPage } from "./ContactsListPage";
-import { createStoryContactsApiClient } from "../storybook/createStoryContactsApiClient";
+import {
+  createDelayedStoryContactsApiClient,
+  createStoryContactsApiClient,
+} from "../storybook/createStoryContactsApiClient";
 
 const meta = {
   title: "Contacts/Contacts List Page",
@@ -35,6 +38,17 @@ export const LoadFailure = {
       apiClient={createStoryContactsApiClient({
         contacts: [],
         listError: new Error("Unable to load contacts right now."),
+      })}
+      navigate={args.navigate}
+    />
+  ),
+};
+
+export const Loading = {
+  render: (args) => (
+    <ContactsListPage
+      apiClient={createDelayedStoryContactsApiClient({
+        delayMs: 5000,
       })}
       navigate={args.navigate}
     />

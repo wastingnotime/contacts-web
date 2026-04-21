@@ -35,3 +35,11 @@ export const Disabled = {
     disabled: true,
   },
 };
+
+export const ValidationFocus = {
+  args: {
+    errors: {
+      phoneNumber: "Phone number is required.",
+    },
+  },
+};

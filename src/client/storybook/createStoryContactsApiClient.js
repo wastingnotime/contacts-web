@@ -125,3 +125,21 @@ export function createStoryContactsApiClient({
     },
   };
 }
+
+export function createDelayedStoryContactsApiClient({
+  delayMs = 2000,
+  contacts = DEFAULT_CONTACTS,
+} = {}) {
+  const baseClient = createStoryContactsApiClient({ contacts });
+
+  return {
+    ...baseClient,
+    async listContacts() {
+      await new Promise((resolve) => {
+        setTimeout(resolve, delayMs);
+      });
+
+      return baseClient.listContacts();
+    },
+  };
+}
