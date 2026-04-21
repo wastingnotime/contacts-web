@@ -1,19 +1,5 @@
 import { ContactApiError } from "../contracts/contactTransport";
-
-const DEFAULT_CONTACTS = [
-  {
-    id: "story-contact-1",
-    firstName: "Ada",
-    lastName: "Lovelace",
-    phoneNumber: "+44 20 7946 0991",
-  },
-  {
-    id: "story-contact-2",
-    firstName: "Grace",
-    lastName: "Hopper",
-    phoneNumber: "555-0100",
-  },
-];
+import { getContactSeedViewModels } from "../fixtures/contactSeeds";
 
 function cloneContact(contact) {
   return { ...contact };
@@ -28,7 +14,7 @@ function sameContactShape(contact, draft) {
 }
 
 export function createStoryContactsApiClient({
-  contacts = DEFAULT_CONTACTS,
+  contacts = getContactSeedViewModels(),
   listError = null,
   getError = null,
   createError = null,
@@ -128,7 +114,7 @@ export function createStoryContactsApiClient({
 
 export function createDelayedStoryContactsApiClient({
   delayMs = 2000,
-  contacts = DEFAULT_CONTACTS,
+  contacts = getContactSeedViewModels(),
 } = {}) {
   const baseClient = createStoryContactsApiClient({ contacts });
 
@@ -145,7 +131,7 @@ export function createDelayedStoryContactsApiClient({
 }
 
 export function createPageStoryContactsApiClient({
-  contacts = DEFAULT_CONTACTS,
+  contacts = getContactSeedViewModels(),
   delayMs = 0,
   missingContactId = null,
 } = {}) {
@@ -170,7 +156,7 @@ export function createPageStoryContactsApiClient({
 }
 
 export function createPendingStoryContactsApiClient({
-  contacts = DEFAULT_CONTACTS,
+  contacts = getContactSeedViewModels(),
 } = {}) {
   const baseClient = createStoryContactsApiClient({ contacts });
   const pendingPromise = new Promise(() => {});
@@ -191,7 +177,7 @@ export function createPendingStoryContactsApiClient({
 }
 
 export function createDeletePendingStoryContactsApiClient({
-  contacts = DEFAULT_CONTACTS,
+  contacts = getContactSeedViewModels(),
 } = {}) {
   const baseClient = createStoryContactsApiClient({ contacts });
   const pendingPromise = new Promise(() => {});

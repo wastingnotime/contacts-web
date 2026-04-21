@@ -1,19 +1,7 @@
 import { http, HttpResponse } from "msw";
+import { getContactSeedTransportContacts } from "../fixtures/contactSeeds";
 
-const INITIAL_CONTACTS = [
-  {
-    id: "isolated-contact-1",
-    first_name: "Ada",
-    last_name: "Lovelace",
-    phone_number: "+44 20 7946 0991",
-  },
-  {
-    id: "isolated-contact-2",
-    first_name: "Grace",
-    last_name: "Hopper",
-    phone_number: "555-0100",
-  },
-];
+const INITIAL_CONTACTS = getContactSeedTransportContacts();
 
 const state = {
   contacts: INITIAL_CONTACTS.map((contact) => ({ ...contact })),
