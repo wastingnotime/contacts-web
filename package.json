@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:integrated-local": "vite --mode integrated-local",
     "build": "vite build",
+    "build:integrated-local": "vite build --mode integrated-local",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest run",

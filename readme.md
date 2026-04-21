@@ -122,6 +122,14 @@ To start the app in isolated mode without a live backend:
 VITE_CONTACTS_UI_MODE=isolated npm run dev
 ```
 
+To start the app against the local integrated service stack:
+
+```bash
+npm run dev:integrated-local
+```
+
+This preset expects a seeded local contacts backend on `http://localhost:8010/api`.
+
 To inspect contact UI states in Storybook:
 
 ```bash

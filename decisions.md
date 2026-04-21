@@ -133,3 +133,30 @@ Rely only on the isolated app runtime for previewing states. This was rejected b
 
 ### Notes
 Keep Storybook backend-free. Prefer local fixtures over reaching into the live bootstrap path. Keep generated `storybook-static/` output out of version control.
+
+## DEC-0005 - Treat Integrated Local Mode As A Separate Local Validation Surface
+
+- Date: 2026-04-21
+- Status: accepted
+- Owners: both
+
+### Context
+The contacts frontend now has two distinct local development pressures: backend-free UI iteration and real local service validation against seeded data. Those needs should not be collapsed into the same mode because they answer different questions during development.
+
+### Decision
+Add an explicit integrated local mode for running the Solid frontend against a locally hosted contacts backend and seeded local data. Keep it separate from isolated mode and from Storybook preview. Use a dedicated Vite mode preset and local environment values to make the stack choice explicit.
+
+### Consequences
+Developers get a clearer path for contract validation and flow debugging without leaving the local machine. The repository now has three distinct local surfaces:
+
+- isolated backend-free app execution
+- integrated local service validation
+- Storybook preview
+
+That separation improves clarity, but it also means the local environment presets and docs need to stay accurate as the stack evolves.
+
+### Alternatives considered
+Fold integrated local behavior into the default live dev server. This was rejected because it would hide the fact that the frontend is running against local services rather than the external backend reference.
+
+### Notes
+Keep the integrated local mode explicit in scripts and documentation. Use deterministic seeded local data when available. Do not let this mode drift into a substitute for the external backend contract.

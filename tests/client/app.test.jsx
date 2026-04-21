@@ -108,6 +108,12 @@ function mountIsolatedApp(path = "/") {
   ));
 }
 
+function mountIntegratedLocalApp(apiClient, path = "/") {
+  return render(() => (
+    <App apiClient={apiClient} runtimeMode="integrated-local" initialPath={path} />
+  ));
+}
+
 describe("App", () => {
   it("renders the empty state for the home route", async () => {
     const apiClient = createStubApiClient();
@@ -141,6 +147,14 @@ describe("App", () => {
     expect(screen.getByText("Isolated mode")).toBeInTheDocument();
     await screen.findByText("Ada Lovelace");
     expect(screen.getByText("Grace Hopper")).toBeInTheDocument();
+  });
+
+  it("renders an integrated local mode badge for a local service stack", async () => {
+    const apiClient = createStubApiClient();
+
+    mountIntegratedLocalApp(apiClient, "/");
+
+    expect(screen.getByText("Integrated local mode")).toBeInTheDocument();
   });
 
   it("navigates from the empty state to the create page", async () => {

@@ -63,6 +63,11 @@ input {
   background: rgba(163, 63, 47, 0.08);
 }
 
+.runtime-badge-integrated-local {
+  color: #7a4d00;
+  background: rgba(122, 77, 0, 0.09);
+}
+
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.16em;

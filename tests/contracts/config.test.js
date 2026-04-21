@@ -23,5 +23,6 @@ describe("contacts API base URL config", () => {
     expect(resolveContactsUiMode(undefined)).toBe("live");
     expect(resolveContactsUiMode("")).toBe("live");
     expect(resolveContactsUiMode("isolated")).toBe("isolated");
+    expect(resolveContactsUiMode("integrated-local")).toBe("integrated-local");
   });
 });

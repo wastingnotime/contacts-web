@@ -27,3 +27,13 @@ export const IsolatedMode = {
     />
   ),
 };
+
+export const IntegratedLocalMode = {
+  render: () => (
+    <App
+      apiClient={createStoryContactsApiClient()}
+      runtimeMode="integrated-local"
+      initialPath="/"
+    />
+  ),
+};

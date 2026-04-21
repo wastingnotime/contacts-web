@@ -20,7 +20,11 @@ export function getContactsApiAuthRoles() {
 }
 
 export function resolveContactsUiMode(value) {
-  return value === "isolated" ? "isolated" : DEFAULT_CONTACTS_UI_MODE;
+  if (value === "isolated" || value === "integrated-local") {
+    return value;
+  }
+
+  return DEFAULT_CONTACTS_UI_MODE;
 }
 
 export function getContactsUiMode() {
