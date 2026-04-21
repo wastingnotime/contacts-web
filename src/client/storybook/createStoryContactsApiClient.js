@@ -189,3 +189,19 @@ export function createPendingStoryContactsApiClient({
     },
   };
 }
+
+export function createDeletePendingStoryContactsApiClient({
+  contacts = DEFAULT_CONTACTS,
+} = {}) {
+  const baseClient = createStoryContactsApiClient({ contacts });
+  const pendingPromise = new Promise(() => {});
+
+  return {
+    ...baseClient,
+    async deleteContact(contactId) {
+      pendingPromise.catch(() => {});
+      await pendingPromise;
+      return baseClient.deleteContact(contactId);
+    },
+  };
+}
