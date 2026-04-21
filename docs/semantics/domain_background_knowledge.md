@@ -54,8 +54,22 @@ For a browser-facing contacts interface, correctness is not only about backend r
 - predictable post-submit behavior
 - error recovery that does not silently discard user work
 - transport-model mapping when backend field names differ from UI language
+- deterministic isolated modes that let the UI be inspected without a live backend
 
 Even a narrow CRUD frontend needs explicit choices for these behaviors or it will feel broken despite a correct backend.
+
+## Testability Background
+
+Frontend testability improves when UI behavior can be separated from live transport concerns.
+
+An isolated mode typically helps when the team wants:
+
+- fast iteration on routes, forms, and edge states
+- deterministic rendering and interaction checks
+- component inspection without backend setup
+- mock API responses that are stable across runs
+
+The important boundary is that isolated-mode mocks should support UI development and specification, not quietly become a second source of business truth.
 
 ## Backend-Contract Background
 
@@ -85,6 +99,7 @@ This repository therefore likely needs a contract-mapping layer rather than lett
 - mutation feedback after create, update, and delete
 - transport adapters between UI models and backend payloads
 - auth claim plumbing or a deliberate abstraction over it
+- mock transport or isolated-mode fixtures for UI-only iteration
 
 ## Industry Language Worth Preserving
 
@@ -111,6 +126,8 @@ This repository therefore likely needs a contract-mapping layer rather than lett
 - treating backend admin assumptions as if they automatically define the web experience role
 - preserving starter-repo backend architecture guidance inside a frontend repository for too long
 - assuming the backend will preserve the exact formatting typed by the user for phone numbers
+- treating isolated-mode mocks as if they were authoritative domain behavior
+- letting backend-free UI shortcuts diverge from the real contract without a clear boundary
 
 ## Specific Gaps Observed In The Reference Baseline
 

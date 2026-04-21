@@ -16,6 +16,7 @@ Use it during `extract`, `refine`, and `build` to define vocabulary, boundaries,
 - current backend repository: `/home/henrique/repos/github/wastingnotime/contacts-v2`
 - primary evidence inventory: `work/sources/contacts_web_reference_inventory.md`
 - backend contract inventory: `work/sources/contacts_v2_api_contract_inventory.md`
+- isolated mode note from `/home/henrique/Downloads/isolated_mode.md` describing a backend-free UI iteration path
 
 ## Current Hypothesis
 
@@ -51,6 +52,8 @@ The current backend contract from `contacts-v2` is a narrow admin CRUD API with 
 - the runtime listens on `0.0.0.0:8010` by default
 
 The historical UI implemented that workflow in Mithril plus Redux. The current direction for this repository is to preserve the workflow while intentionally changing the web stack to Solid.
+
+The isolated mode note adds a second pressure on the repository: the frontend should be easy to exercise without a live backend when the goal is UI iteration, edge-state inspection, or deterministic testing. That suggests an intentional local mode with mock API behavior and no backend dependency may be useful as an evaluation and development path, provided it stays separate from the contacts backend contract.
 
 ## Repository Role
 
@@ -130,6 +133,8 @@ The current model assumes these flows still matter even though the implementatio
 - the backend lineage is moving from legacy camelCase payloads toward `contacts-v2` snake_case payloads
 - the web app likely needs an anti-corruption boundary between UI language and backend transport language
 - the backend now has explicit response semantics for auth, validation, missing records, duplicates, and health checks
+- the repo may benefit from a backend-free isolated mode for faster UI development and deterministic edge-state inspection
+- testability pressure may justify a mock-driven mode that exercises pages and states without depending on the contacts backend
 
 ## Likely UI State Model
 
@@ -138,6 +143,7 @@ The current model assumes these flows still matter even though the implementatio
 - insert versus edit mode state
 - request status state such as idle, loading, submitting, succeeded, failed
 - user-visible error state scoped to route or form
+- isolated-mode state that selects between live backend behavior and deterministic mock behavior
 
 ## Unresolved Tensions And Ambiguities
 
@@ -150,3 +156,5 @@ The current model assumes these flows still matter even though the implementatio
 - The list currently deletes directly from the index view; confirmation, undo, or safer destructive interaction is not yet defined.
 - The exact ownership of validation is unresolved: the browser may validate for usability, but authoritative rejection must remain aligned with the backend.
 - The backend exposes a diagnostic `/events` route, but it is not yet clear whether the web app should treat it as a contract dependency or ignore it as an internal runtime aid.
+- The repository does not yet define whether backend-free isolated mode is a first-class development/test path or only an ad hoc local convenience.
+- If isolated mode becomes explicit, the boundary between live contract tests and mock-driven UI tests needs to stay clear so the two modes do not drift into one another.
