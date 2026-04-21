@@ -42,6 +42,7 @@ Included in this slice:
 - load the existing app styles in the preview frame
 - add deterministic stories for contact form fields
 - add deterministic stories for the contacts list page
+- add deterministic stories for create and edit page states
 - keep story rendering backend-free through local fixture clients
 - add explicit loading, empty, error, and disabled story variants for the high-value inspection states
 
@@ -139,6 +140,7 @@ Possible supporting concepts if useful during build:
 - a shared story fixture helper for contacts pages
 - a global preview decorator for layout
 - small story wrappers for loading and error states
+- a delayed fixture helper for page-level loading states
 
 The slice should avoid introducing a second application shell unless it clarifies story inspection materially.
 
@@ -158,6 +160,8 @@ The preview surface should support inspection of:
 
 - contact form field states
 - contacts list states
+- create page states
+- edit page states
 - loading, empty, and error presentation where the component exposes them
 - disabled and validation states where the component exposes them
 
@@ -173,6 +177,8 @@ Story previews should specify:
 
 - form fields render with values and errors
 - contacts list renders with deterministic data, empty state, loading state, and failure state
+- create and edit pages render with deterministic backend-free fixtures
+- edit loading and missing-record states are visible without live backend access
 - failure states are visible without live backend access
 
 ## Scenario Definition
@@ -195,6 +201,7 @@ Scenario steps:
 - preview stories are deterministic
 - Storybook stays separate from the live backend path
 - the highest-value edge states are inspectable without backend access
+- page-level preview states are inspectable without the app router
 
 ## Notes For Build
 
