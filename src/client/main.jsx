@@ -1,25 +1,7 @@
-import { render } from "solid-js/web";
-
-import { App } from "./App";
-import { createContactsApiClient } from "./api/createContactsApiClient";
-import { getContactsUiMode } from "./config";
-import { startContactsMockWorker } from "./mock/contactsMockWorker";
+import { bootstrapContactsApp } from "./bootstrap/bootstrapContactsApp.jsx";
 
 async function bootstrap() {
-  const runtimeMode = getContactsUiMode();
-
-  if (runtimeMode === "isolated") {
-    await startContactsMockWorker();
-  }
-
-  const apiClient = createContactsApiClient({
-    fetchFn: window.fetch.bind(window),
-  });
-
-  render(
-    () => <App apiClient={apiClient} runtimeMode={runtimeMode} />,
-    document.getElementById("root"),
-  );
+  await bootstrapContactsApp();
 }
 
 bootstrap();
