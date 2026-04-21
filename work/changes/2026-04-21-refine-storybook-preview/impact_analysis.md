@@ -32,4 +32,4 @@ Storybook should use local fixtures and shared styles, but it should not become 
 
 ## Next Build Pressure
 
-The next build slice should add Storybook config, a script to start it, and deterministic stories that cover the contact form, contacts list, create page, and edit page across empty, loading, validation, missing-record, submit-pending, and error states.
+The next build slice should add Storybook config, a script to start it, and deterministic stories that cover the contact form, contacts list, create page, edit page, and delete flow across empty, loading, validation, missing-record, submit-pending, delete-confirmation, delete-pending, and error states.
