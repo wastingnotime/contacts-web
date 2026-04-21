@@ -1,0 +1,194 @@
+import { http, HttpResponse } from "msw";
+
+const INITIAL_CONTACTS = [
+  {
+    id: "isolated-contact-1",
+    first_name: "Ada",
+    last_name: "Lovelace",
+    phone_number: "+44 20 7946 0991",
+  },
+  {
+    id: "isolated-contact-2",
+    first_name: "Grace",
+    last_name: "Hopper",
+    phone_number: "555-0100",
+  },
+];
+
+const state = {
+  contacts: INITIAL_CONTACTS.map((contact) => ({ ...contact })),
+  nextContactNumber: INITIAL_CONTACTS.length + 1,
+};
+
+function cloneContact(contact) {
+  return { ...contact };
+}
+
+function resetState() {
+  state.contacts = INITIAL_CONTACTS.map((contact) => ({ ...contact }));
+  state.nextContactNumber = INITIAL_CONTACTS.length + 1;
+}
+
+function isAdminRequest(request) {
+  const roles = request.headers.get("x-auth-roles") || "";
+  return roles
+    .split(",")
+    .map((role) => role.trim().toLowerCase())
+    .filter(Boolean)
+    .includes("admin");
+}
+
+function duplicateExists(payload, excludeContactId = null) {
+  const nextFirstName = payload.first_name.trim().toLowerCase();
+  const nextLastName = payload.last_name.trim().toLowerCase();
+  const nextPhoneNumber = payload.phone_number.trim().toLowerCase();
+
+  return state.contacts.some((contact) => {
+    if (excludeContactId && contact.id === excludeContactId) {
+      return false;
+    }
+
+    return (
+      contact.first_name.trim().toLowerCase() === nextFirstName &&
+      contact.last_name.trim().toLowerCase() === nextLastName &&
+      contact.phone_number.trim().toLowerCase() === nextPhoneNumber
+    );
+  });
+}
+
+function validatePayload(payload) {
+  if (!payload || typeof payload !== "object") {
+    return false;
+  }
+
+  return ["first_name", "last_name", "phone_number"].every(
+    (field) => typeof payload[field] === "string" && payload[field].trim() !== "",
+  );
+}
+
+function mapPayloadToContact(payload, contactId) {
+  return {
+    id: contactId,
+    first_name: payload.first_name,
+    last_name: payload.last_name,
+    phone_number: payload.phone_number,
+  };
+}
+
+function forbiddenResponse() {
+  return HttpResponse.json(
+    { message: "You are not allowed to access contacts right now." },
+    { status: 403 },
+  );
+}
+
+function notFoundResponse() {
+  return HttpResponse.json({ message: "That contact could not be found." }, { status: 404 });
+}
+
+function validationResponse() {
+  return HttpResponse.json({ message: "The contact data is invalid." }, { status: 400 });
+}
+
+function duplicateResponse() {
+  return HttpResponse.json(
+    { message: "A contact with this data already exists." },
+    { status: 409 },
+  );
+}
+
+export function resetContactsMockState() {
+  resetState();
+}
+
+export const contactsMockHandlers = [
+  http.get("/api/contacts", ({ request }) => {
+    if (!isAdminRequest(request)) {
+      return forbiddenResponse();
+    }
+
+    return HttpResponse.json(state.contacts.map(cloneContact));
+  }),
+
+  http.get("/api/contacts/:contactId", ({ request, params }) => {
+    if (!isAdminRequest(request)) {
+      return forbiddenResponse();
+    }
+
+    const contact = state.contacts.find((item) => item.id === params.contactId);
+    if (!contact) {
+      return notFoundResponse();
+    }
+
+    return HttpResponse.json(cloneContact(contact));
+  }),
+
+  http.post("/api/contacts", async ({ request }) => {
+    if (!isAdminRequest(request)) {
+      return forbiddenResponse();
+    }
+
+    const payload = await request.json();
+    if (!validatePayload(payload)) {
+      return validationResponse();
+    }
+
+    if (duplicateExists(payload)) {
+      return duplicateResponse();
+    }
+
+    const created = mapPayloadToContact(payload, `isolated-contact-${state.nextContactNumber}`);
+    state.nextContactNumber += 1;
+    state.contacts.push(cloneContact(created));
+
+    return HttpResponse.json(created, {
+      status: 201,
+      headers: {
+        Location: `/contacts/${created.id}`,
+      },
+    });
+  }),
+
+  http.put("/api/contacts/:contactId", async ({ request, params }) => {
+    if (!isAdminRequest(request)) {
+      return forbiddenResponse();
+    }
+
+    const payload = await request.json();
+    if (!validatePayload(payload)) {
+      return validationResponse();
+    }
+
+    if (typeof payload.id === "string" && payload.id.trim() !== "" && payload.id !== params.contactId) {
+      return validationResponse();
+    }
+
+    const contactIndex = state.contacts.findIndex((item) => item.id === params.contactId);
+    if (contactIndex < 0) {
+      return notFoundResponse();
+    }
+
+    if (duplicateExists(payload, params.contactId)) {
+      return duplicateResponse();
+    }
+
+    const updated = mapPayloadToContact(payload, params.contactId);
+    state.contacts[contactIndex] = cloneContact(updated);
+
+    return HttpResponse.json(updated);
+  }),
+
+  http.delete("/api/contacts/:contactId", ({ request, params }) => {
+    if (!isAdminRequest(request)) {
+      return forbiddenResponse();
+    }
+
+    const contactIndex = state.contacts.findIndex((item) => item.id === params.contactId);
+    if (contactIndex < 0) {
+      return notFoundResponse();
+    }
+
+    state.contacts.splice(contactIndex, 1);
+    return new HttpResponse(null, { status: 204 });
+  }),
+];

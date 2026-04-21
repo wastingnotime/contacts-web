@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { HttpContactsApiClient } from "../../src/client/api/httpContactsApiClient";
-import { IsolatedContactsApiClient } from "../../src/client/api/isolatedContactsApiClient";
 import { createContactsApiClient } from "../../src/client/api/createContactsApiClient";
 
 describe("createContactsApiClient", () => {
@@ -13,11 +12,12 @@ describe("createContactsApiClient", () => {
     expect(apiClient).toBeInstanceOf(HttpContactsApiClient);
   });
 
-  it("creates a deterministic isolated client when requested", () => {
+  it("keeps the HTTP client shape in isolated mode so mock transport can intercept it", () => {
     const apiClient = createContactsApiClient({
       runtimeMode: "isolated",
+      fetchFn: () => Promise.resolve(),
     });
 
-    expect(apiClient).toBeInstanceOf(IsolatedContactsApiClient);
+    expect(apiClient).toBeInstanceOf(HttpContactsApiClient);
   });
 });

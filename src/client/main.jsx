@@ -3,14 +3,23 @@ import { render } from "solid-js/web";
 import { App } from "./App";
 import { createContactsApiClient } from "./api/createContactsApiClient";
 import { getContactsUiMode } from "./config";
+import { startContactsMockWorker } from "./mock/contactsMockWorker";
 
-const runtimeMode = getContactsUiMode();
-const apiClient = createContactsApiClient({
-  runtimeMode,
-  fetchFn: window.fetch.bind(window),
-});
+async function bootstrap() {
+  const runtimeMode = getContactsUiMode();
 
-render(
-  () => <App apiClient={apiClient} runtimeMode={runtimeMode} />,
-  document.getElementById("root"),
-);
+  if (runtimeMode === "isolated") {
+    await startContactsMockWorker();
+  }
+
+  const apiClient = createContactsApiClient({
+    fetchFn: window.fetch.bind(window),
+  });
+
+  render(
+    () => <App apiClient={apiClient} runtimeMode={runtimeMode} />,
+    document.getElementById("root"),
+  );
+}
+
+bootstrap();

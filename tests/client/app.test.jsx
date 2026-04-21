@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@solidjs/testing-library";
 
 import { App } from "../../src/client/App";
-import { IsolatedContactsApiClient } from "../../src/client/api/isolatedContactsApiClient";
+import { createContactsApiClient } from "../../src/client/api/createContactsApiClient";
 
 function createStubApiClient(initialContacts = []) {
   const state = {
@@ -99,7 +99,13 @@ function mountApp(apiClient, path = "/") {
 function mountIsolatedApp(path = "/") {
   window.history.pushState({}, "", path);
   return render(() => (
-    <App apiClient={new IsolatedContactsApiClient()} runtimeMode="isolated" />
+    <App
+      apiClient={createContactsApiClient({
+        runtimeMode: "isolated",
+        fetchFn: window.fetch.bind(window),
+      })}
+      runtimeMode="isolated"
+    />
   ));
 }
 
