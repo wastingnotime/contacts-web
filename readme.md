@@ -116,6 +116,12 @@ npm run build
 
 The local frontend is intended to talk to the contacts backend at `http://0.0.0.0:8010`.
 
+To start the app in isolated mode without a live backend:
+
+```bash
+VITE_CONTACTS_UI_MODE=isolated npm run dev
+```
+
 ---
 
 ## Repository Notes
