@@ -1,18 +1,16 @@
 import { render } from "solid-js/web";
 
 import { App } from "./App";
-import { HttpContactsApiClient } from "./api/httpContactsApiClient";
-import {
-  getContactsApiAuthRoles,
-  getContactsApiAuthSubject,
-  getContactsApiBaseUrl,
-} from "./config";
+import { createContactsApiClient } from "./api/createContactsApiClient";
+import { getContactsUiMode } from "./config";
 
-const apiClient = new HttpContactsApiClient({
-  baseUrl: getContactsApiBaseUrl(),
-  authSubject: getContactsApiAuthSubject(),
-  authRoles: getContactsApiAuthRoles(),
+const runtimeMode = getContactsUiMode();
+const apiClient = createContactsApiClient({
+  runtimeMode,
   fetchFn: window.fetch.bind(window),
 });
 
-render(() => <App apiClient={apiClient} />, document.getElementById("root"));
+render(
+  () => <App apiClient={apiClient} runtimeMode={runtimeMode} />,
+  document.getElementById("root"),
+);

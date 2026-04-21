@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@solidjs/testing-library";
 
 import { App } from "../../src/client/App";
+import { IsolatedContactsApiClient } from "../../src/client/api/isolatedContactsApiClient";
 
 function createStubApiClient(initialContacts = []) {
   const state = {
@@ -92,7 +93,14 @@ function createDeferred() {
 
 function mountApp(apiClient, path = "/") {
   window.history.pushState({}, "", path);
-  return render(() => <App apiClient={apiClient} />);
+  return render(() => <App apiClient={apiClient} runtimeMode="live" />);
+}
+
+function mountIsolatedApp(path = "/") {
+  window.history.pushState({}, "", path);
+  return render(() => (
+    <App apiClient={new IsolatedContactsApiClient()} runtimeMode="isolated" />
+  ));
 }
 
 describe("App", () => {
@@ -120,6 +128,14 @@ describe("App", () => {
 
     await screen.findByText("Ada Lovelace");
     expect(screen.getByText("+44 20 7946 0991")).toBeInTheDocument();
+  });
+
+  it("boots in isolated mode without needing a live backend", async () => {
+    mountIsolatedApp("/");
+
+    expect(screen.getByText("Isolated mode")).toBeInTheDocument();
+    await screen.findByText("Ada Lovelace");
+    expect(screen.getByText("Grace Hopper")).toBeInTheDocument();
   });
 
   it("navigates from the empty state to the create page", async () => {

@@ -52,6 +52,9 @@ export function App(props) {
     <main class="app-shell">
       <header class="hero">
         <p class="eyebrow">Contacts</p>
+        <p class={`runtime-badge ${props.runtimeMode === "isolated" ? "runtime-badge-isolated" : "runtime-badge-live"}`}>
+          {props.runtimeMode === "isolated" ? "Isolated mode" : "Live mode"}
+        </p>
         <h1>Browser workflow for the contacts experience.</h1>
       </header>
       {route().name === "create" ? (
