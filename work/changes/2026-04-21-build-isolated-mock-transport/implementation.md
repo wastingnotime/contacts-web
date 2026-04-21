@@ -9,6 +9,7 @@
 - added shared MSW contacts handlers for list, create, get, update, and delete
 - added browser worker startup for isolated mode
 - added a node test server and reset hook for deterministic tests
+- added the committed MSW worker asset under `public/mockServiceWorker.js`
 - changed isolated mode to use the same `HttpContactsApiClient` shape as live mode
 - kept the live backend path intact
 - removed the bespoke isolated in-memory client
@@ -19,6 +20,7 @@
 - isolated mode now uses MSW transport interception instead of a custom client implementation
 - isolated mode can list, create, update, and delete contacts deterministically
 - mock state resets between tests
+- the MSW worker asset is served by Vite as JavaScript instead of falling back to HTML
 
 ## Validation
 
