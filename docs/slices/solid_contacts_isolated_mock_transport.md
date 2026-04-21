@@ -42,6 +42,7 @@ Included in this slice:
 - expose the same contacts HTTP routes through deterministic mock handlers
 - support deterministic contact fixtures across list, create, edit, and delete workflows
 - keep the live backend path available and unchanged
+- serve the MSW worker asset from the browser public root so the worker registers as JavaScript instead of falling back to HTML
 
 Contract map for this slice:
 
@@ -154,6 +155,7 @@ Possible supporting concepts if useful during build:
 - a browser worker startup seam
 - a test server startup seam
 - reusable contacts fixture helpers and reset hooks
+- a public asset path for `mockServiceWorker.js`
 
 The slice should avoid introducing a heavy state-management system unless it clarifies behavior materially.
 
@@ -170,6 +172,7 @@ The slice should avoid introducing a heavy state-management system unless it cla
 Optional ports:
 
 - local preview tooling for UI inspection
+- committed MSW worker asset under `public/mockServiceWorker.js`
 
 ## Interface Expectations
 
@@ -220,6 +223,7 @@ Scenario steps:
 - isolated mode is explicit
 - isolated mode uses a real mock transport boundary
 - isolated mode is deterministic
+- the worker script is served from the browser public root
 - live backend behavior remains separate
 - UI development and edge-state inspection work without backend setup
 
@@ -228,3 +232,4 @@ Scenario steps:
 - keep the mode boundary visible
 - do not let isolated mocks become the source of business truth
 - preserve the live contacts API client path
+- keep `public/mockServiceWorker.js` in sync with the MSW package version when dependencies change
