@@ -19,3 +19,5 @@ The repository needs a local preview runtime for inspecting contact UI states wi
 Storybook should be introduced as a preview tool, not as a second product runtime.
 
 The preview should stay backend-free and deterministic, and it should focus on inspecting the existing UI states rather than adding new product behavior.
+
+The most valuable next story coverage is the set of edge states that are otherwise awkward to inspect quickly: loading, empty, validation, and error states on the list and form surfaces.
