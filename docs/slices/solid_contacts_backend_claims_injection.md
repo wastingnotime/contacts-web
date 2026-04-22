@@ -6,6 +6,7 @@ Define the next executable vertical slice for `contacts-web`.
 
 This slice keeps the existing Solid browser client and contract-mapping boundary, but makes backend request claims explicit so the local backend contract can be exercised end to end without introducing login UX.
 The current implementation threads those explicit claims through the contacts API client and backend gateway instead of hiding them in page components.
+The current implementation keeps the claims source config-backed in the BFF so the boundary stays explicit without inventing login UX.
 
 ## Selected Pack
 
@@ -21,13 +22,14 @@ Early-phase rule:
 
 - `build` should add a boundary for request claims and preserve the existing transport adapter shape
 - `build` should not introduce login, session storage, or token refresh workflows
+- `build` should keep the BFF claims source explicit and configurable
 - backend interaction should remain covered by mocked or recording client adapters and focused contract tests
 
 ## Architecture Mode
 
 - frontend-first client/server split
 - explicit transport adapter between UI state and backend payloads
-- explicit request-claims boundary for backend calls
+- explicit config-backed request-claims boundary for backend calls
 
 Interpretation:
 
@@ -70,6 +72,7 @@ This slice resolves the next pressure:
 - the local frontend endpoint can only be exercised successfully if the request path includes the backend's required claim headers
 - adding login UX now would overreach because the backend contract only requires claims, not a user session flow
 - keeping claims explicit preserves the adapter boundary and avoids burying authorization behavior inside page components
+- the BFF config layer is already the right place to keep those claims explicit and overrideable for local and future environments
 
 The slice keeps the existing browser workflow intact:
 
@@ -93,6 +96,7 @@ Success result:
 
 - request headers are produced for backend calls
 - the claim source remains explicit and overrideable
+- the BFF config helpers expose the claim values used by backend calls
 
 Failure conditions:
 
@@ -210,6 +214,7 @@ Contract-focused tests should specify:
 
 - every request method in the API client passes claims headers
 - the request-claims helper produces the expected headers from configuration
+- the BFF config helpers produce the expected base URL, subject, and role values from environment overrides
 - backend error categories remain preserved
 
 ## Scenario Definition
@@ -229,7 +234,7 @@ Scenario steps:
 ## Done Criteria
 
 - the browser client sends explicit claim headers with contacts API calls
-- the request-claims boundary is configurable and testable
+- the request-claims boundary is configurable and testable through the BFF config layer
 - the local frontend can exercise the backend contract without adding login UX
 - the implementation keeps authorization handling separate from transport mapping and page components
 

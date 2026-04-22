@@ -51,7 +51,7 @@ The dev workflow should make it obvious when the browser is using the BFF rather
 
 ## Follow-Up Pressure From EGD
 
-The build validated the boundary, and the review surfaced one remaining refinement pressure for the next slice:
+The build validated the boundary, and the remaining pressure is to keep the claims source explicit in the BFF config layer until real session work exists:
 
 - claim injection is still config-backed in the BFF, so any future session work should be modeled explicitly instead of implied by architecture text
 
