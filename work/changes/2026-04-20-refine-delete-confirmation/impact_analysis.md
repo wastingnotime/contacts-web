@@ -23,6 +23,7 @@ The next slice should therefore establish:
 - a local confirmation state per contact row
 - a confirm/cancel flow
 - tests that prove cancel does not delete and confirm does
+- the current implementation already uses inline row-level confirm and cancel actions
 
 ## Areas Impacted
 

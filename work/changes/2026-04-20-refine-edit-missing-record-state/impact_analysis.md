@@ -23,6 +23,7 @@ The next slice should therefore establish:
 - a dedicated missing-record state on the edit route
 - an obvious back-to-list action when the target contact is gone
 - tests that prove the route state is rendered deterministically
+- the current implementation already renders a dedicated panel for the stale route
 
 ## Areas Impacted
 

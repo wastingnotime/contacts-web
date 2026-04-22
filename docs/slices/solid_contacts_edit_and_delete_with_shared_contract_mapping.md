@@ -5,7 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice extends the Solid browser client with edit and delete workflows while reusing the contract-mapping boundary already established for list and create.
-The current implementation reuses the same transport mapper, request-claims boundary, and error mapping for list, create, edit, and delete, with the browser reaching that contract through the BFF boundary.
+The current implementation reuses the same transport mapper, request-claims boundary, and error mapping for list, create, edit, and delete, with the browser reaching that contract through the BFF boundary and isolated mock transport available for local inspection.
 
 ## Selected Pack
 
@@ -35,6 +35,7 @@ Interpretation:
 - this repository owns browser behavior, route semantics, and user feedback
 - this repository does not own persistence or authoritative contact validation
 - the adapter boundary should continue to isolate backend naming, auth semantics, and response categories from page components, even though the BFF now fronts the backend
+- isolated mode can still exercise the same workflows through the mock transport boundary
 
 ## Discovery Scope
 
@@ -82,6 +83,7 @@ The slice keeps list/create behavior intact and reuses the same adapter boundary
 - list remains the entry point
 - create remains the primary way to introduce new contacts
 - edit and delete add route coverage and failure mapping without introducing a new transport layer
+- edit and delete can be inspected through isolated mock transport as well as live path tests
 
 Starting with a separate auth-login slice would overreach because the backend contract already defines admin claims but not a browser login flow.
 Starting with search or pagination would dilute the contract work that still needs to land on the CRUD paths.

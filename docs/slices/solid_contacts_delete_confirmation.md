@@ -50,6 +50,7 @@ Contract map for this slice:
 - canceling confirmation does not call the backend
 - confirmed delete continues to use the existing `ContactsApiClient`
 - backend `403`, `404`, and unexpected delete failures remain visible
+- the current implementation already uses inline row-level confirm and cancel actions
 
 Excluded from this slice:
 

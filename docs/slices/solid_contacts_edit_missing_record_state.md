@@ -48,6 +48,7 @@ Contract map for this slice:
 
 - missing edit record is a browser-visible stale-route state
 - the user can return to the list without changing backend semantics
+- the current implementation already renders a dedicated panel for the stale route
 
 Excluded from this slice:
 

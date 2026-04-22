@@ -51,6 +51,7 @@ Contract map for this slice:
 - isolated mode routes those requests to mock handlers instead of the live backend
 - live mode continues to use the existing HTTP client and backend base URL
 - the mode boundary stays explicit so test and development paths do not drift together
+- the current implementation already uses the shared MSW handlers and committed worker asset
 
 Excluded from this slice:
 

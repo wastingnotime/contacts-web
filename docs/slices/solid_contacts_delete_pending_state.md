@@ -50,6 +50,7 @@ Contract map for this slice:
 - delete pending is a browser state while the backend request is running
 - cancel remains unavailable once delete is already in flight
 - delete success and failure continue to use the existing backend contract
+- the current implementation already keeps the confirmation visible while delete is pending
 
 Excluded from this slice:
 

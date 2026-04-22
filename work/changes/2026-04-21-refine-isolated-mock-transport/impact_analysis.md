@@ -29,6 +29,7 @@ That distinction should remain obvious in code, tests, and docs.
 - mock handlers could drift away from the live contacts contract if they are not kept close to the HTTP client
 - test suites could become flaky if mock state is not reset between runs
 - the browser worker startup could interfere with the live mode path if mode selection is not explicit
+- the current implementation already uses shared MSW handlers, worker startup, and deterministic reset hooks
 
 ## Next Build Pressure
 
