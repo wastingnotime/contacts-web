@@ -39,6 +39,42 @@ Any additional implementation guidance, migration note, or follow-up.
 
 Add entries as the repository evolves.
 
+## DEC-0007 - Split Licensing Between MRL Artifacts And Contacts-Web Artifacts
+
+- Date: 2026-04-22
+- Status: accepted
+- Owners: both
+
+### Context
+This repository contains two materially different kinds of content:
+
+- MRL process and operating artifacts that should remain reusable across repositories
+- `contacts-web` product artifacts that are specific to this repository's implementation and delivery surface
+
+The repository needs a durable memory of which license applies to which layer so future changes do not collapse the distinction.
+
+### Decision
+Keep the MRL process material under MIT while treating the `contacts-web` project artifacts as MPL 2.0 content.
+
+For this repository, the intended split is:
+
+- MIT for MRL operating docs, reusable workflow guidance, and other process-oriented artifacts
+- MPL 2.0 for `contacts-web` implementation code, tests, semantic artifacts, slice artifacts, and runtime assets
+
+### Consequences
+The repository now has an explicit licensing boundary that matches the architectural boundary:
+
+- MRL remains a reusable method layer
+- `contacts-web` remains the product-specific layer
+
+Future publishing or redistribution work needs to preserve that distinction instead of assuming a single repository-wide license.
+
+### Alternatives considered
+Use one license for the entire repository. That was rejected because the repo now serves both a reusable MRL layer and product-specific `contacts-web` artifacts, and the user explicitly wants those treated differently.
+
+### Notes
+The root license files and any release metadata should be kept consistent with this split-license decision when publishing or redistributing repository content.
+
 ## DEC-0006 - Keep The Web BFF In The Contacts-Web Repo
 
 - Date: 2026-04-22
