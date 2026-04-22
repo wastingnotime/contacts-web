@@ -5,6 +5,7 @@
 Define the first executable vertical slice for `contacts-web`.
 
 This slice should establish the new frontend direction explicitly while staying narrow enough to build deterministically from an empty repository.
+The current implementation keeps this slice as the base list/create contract-mapping boundary for the Solid browser client.
 
 ## Selected Pack
 

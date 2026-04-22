@@ -5,6 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice makes duplicate and missing-record responses explicit in the browser copy instead of leaving them as generic backend messages.
+The current implementation keeps duplicate and missing-record copy local to the shared error helper and the affected workflow pages.
 
 ## Selected Pack
 

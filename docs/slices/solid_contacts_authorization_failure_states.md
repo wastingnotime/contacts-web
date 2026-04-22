@@ -5,6 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice makes authorization failures visible and consistent across the Solid browser client without introducing login UX or changing the backend contract boundary.
+The current implementation already treats `403` as a distinct browser-visible state across the contacts workflows.
 
 ## Selected Pack
 

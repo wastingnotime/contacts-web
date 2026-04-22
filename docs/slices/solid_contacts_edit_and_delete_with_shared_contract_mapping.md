@@ -5,6 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice extends the Solid browser client with edit and delete workflows while reusing the contract-mapping boundary already established for list and create.
+The current implementation reuses the same transport mapper, request-claims boundary, and error mapping for list, create, edit, and delete.
 
 ## Selected Pack
 

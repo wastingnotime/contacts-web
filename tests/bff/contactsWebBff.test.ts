@@ -63,7 +63,7 @@ describe("ContactsWebBffClient", () => {
       first_name: "Grace",
       last_name: "Hopper",
       phone_number: "555-0100",
-    });
+    }, undefined);
   });
 
   it("rejects invalid drafts before calling the backend gateway", async () => {
