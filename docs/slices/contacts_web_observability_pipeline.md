@@ -50,7 +50,7 @@ Included in this slice:
 
 Contract map for this slice:
 
-- SPA telemetry should capture page loads, route changes, client errors, and API calls to the BFF
+- SPA telemetry should capture the initial page view, route changes, client errors, and API calls to the BFF
 - BFF telemetry should capture incoming requests, backend calls, aggregation behavior, retries, and failures
 - API telemetry should capture request lifecycle, DB or domain operations, and backend errors
 - telemetry from all layers should be attributable to the same journey when the user action is the same
@@ -149,6 +149,8 @@ Observability tests should specify:
 - trace context survives SPA -> BFF -> API requests
 - telemetry carries consistent service and environment metadata across the three layers
 - browser telemetry does not require direct exposure of the final observability backend token
+- browser startup emits a page-view event through the BFF telemetry path
+- SPA navigation emits a route-change event through the same telemetry path
 - a single user journey can be reviewed across traces, metrics, and logs
 
 ## Scenario Definition
@@ -163,7 +165,7 @@ Scenario steps:
 2. trigger a contacts workflow that crosses the SPA, BFF, and API
 3. observe one correlated trace across the layers
 4. confirm shared telemetry metadata is present
-5. confirm browser telemetry uses the controlled ingestion path
+5. confirm browser startup and route-change telemetry use the controlled ingestion path
 
 ## Done Criteria
 

@@ -17,7 +17,7 @@ It touches:
 
 ### SPA
 
-The browser layer needs to emit signals that are useful for user-experience analysis without exposing direct observability credentials.
+The browser layer needs to emit page-view and route-change signals that are useful for user-experience analysis without exposing direct observability credentials.
 
 ### BFF
 
