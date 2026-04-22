@@ -38,6 +38,8 @@ The same reference chooses Solid as the current technology direction for `contac
 
 The BFF summary adds another implementation-direction signal: if `contacts-web` owns a web-specific BFF, the repository should keep delivery concerns separate from the SPA and treat the BFF as a channel-specific adapter rather than a second source of domain truth.
 
+The observability strategy adds a telemetry-direction signal: if `contacts-web` spans SPA, BFF, and API delivery layers, the repository should treat traces, metrics, and logs as one correlated system rather than three isolated streams. The browser should not send telemetry directly to a token-bearing destination; the pipeline should be collector-based and layer-aware.
+
 ## Common Expectations For Contact Web Apps
 
 - users expect a clear list of contacts
@@ -69,6 +71,14 @@ For a web-specific BFF, the same principle applies at the delivery layer:
 - auth/session handling belongs in the BFF only when it is required for the web channel
 - the BFF should not become shared infrastructure for other channels
 
+For observability across SPA, BFF, and API, the same principle applies to telemetry:
+
+- traces should capture causality across the full request path
+- metrics should describe latency, error rate, and dependency behavior without overloading logs
+- logs should provide context for failures without becoming a high-volume substitute for traces or metrics
+- the browser should emit user-experience signals, the BFF should emit orchestration signals, and the API should emit business and resource signals
+- shared metadata such as service name, environment, version, feature, and journey should be consistent enough to join across layers
+
 ## Testability Background
 
 Frontend testability improves when UI behavior can be separated from live transport concerns.
@@ -94,6 +104,13 @@ For a BFF-enabled repository, that same boundary should also separate:
 - BFF contract mapping tests
 - full local integration against the backend API
 
+For observability, the same boundary should also separate:
+
+- browser-facing telemetry capture
+- BFF-side telemetry export and enrichment
+- backend-side telemetry export and enrichment
+- any collector or gateway that sits between public browser traffic and private telemetry destinations
+
 ## Backend-Contract Background
 
 The legacy repository and `contacts-v2` expose similar CRUD intent but not identical contracts.
@@ -109,6 +126,8 @@ Observed differences already matter for frontend evaluation:
 - update treats the path ID as authoritative and rejects mismatched body IDs
 - phone values are normalized on the backend, so the UI should not assume verbatim persistence of formatting characters
 - auth is claims-based in the current runtime, so the web app needs a deliberate plan for how claims are supplied or proxied
+- a single end-to-end user journey may need to produce one distributed trace, correlated logs, and aggregated metrics across SPA, BFF, and API
+- browser telemetry should not embed permanent service credentials or bypass the collector path
 
 This repository therefore likely needs a contract-mapping layer rather than letting backend transport naming leak directly into every component.
 
@@ -126,6 +145,7 @@ The BFF summary suggests that contract-mapping pressure may be more explicit tha
 - auth claim plumbing or a deliberate abstraction over it
 - mock transport or isolated-mode fixtures for UI-only iteration
 - web BFF route or adapter boundary for browser-specific delivery concerns
+- a telemetry collector or ingress path for browser, BFF, and API observability
 
 ## Industry Language Worth Preserving
 
@@ -157,6 +177,8 @@ The BFF summary suggests that contract-mapping pressure may be more explicit tha
 - treating an integrated local dev stack as a substitute for the external backend contract instead of a local validation surface
 - letting a web BFF absorb domain rules that should remain in the backend API
 - letting the SPA and BFF merge into one indistinct component tree
+- sending browser telemetry directly to the final observability backend without a controlled collector path
+- treating traces, logs, and metrics as interchangeable signals instead of distinct observability concerns
 
 ## Specific Gaps Observed In The Reference Baseline
 

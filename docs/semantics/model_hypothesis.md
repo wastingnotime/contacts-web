@@ -20,6 +20,8 @@ Use it during `extract`, `refine`, and `build` to define vocabulary, boundaries,
 - integrated local mode note from `/home/henrique/Downloads/integrated_local_mode.md` describing a multi-service local development and integration path
 - BFF architecture summary from `/home/henrique/Downloads/bff-architecture-summary.md` describing a web-specific delivery adapter for `contacts-web`
 - BFF architecture summary inventory: `work/sources/bff_architecture_summary_inventory.md`
+- observability strategy from `/home/henrique/Downloads/observability_strategy_spa_bff_api.md` describing end-to-end telemetry across SPA, BFF, and API
+- observability strategy inventory: `work/sources/observability_strategy_spa_bff_api_inventory.md`
 
 ## Current Hypothesis
 
@@ -64,6 +66,8 @@ The isolated mode note adds a second pressure on the repository: the frontend sh
 
 The integrated local mode note adds a complementary pressure: the frontend should also be easy to exercise with real local service interaction when the goal is contract validation, flow debugging, or integration testing. That suggests a second intentional local mode that runs the frontend with a seeded backend and local database through Docker Compose, while still keeping it separate from the external production backend contract.
 
+The observability strategy adds a system-wide pressure on top of the delivery boundary work: the SPA, BFF, and API should participate in one correlated telemetry story. That suggests observability should be treated as an end-to-end concern across the browser, delivery adapter, and backend rather than as three separate stacks of logs and metrics.
+
 ## Repository Role
 
 - provide the primary web interface for the `contacts` experience domain
@@ -72,6 +76,7 @@ The integrated local mode note adds a complementary pressure: the frontend shoul
 - validate how the `contacts` experience should feel on the web before introducing broader product scope
 - map the current frontend-friendly contract to the backend's snake_case HTTP shape without leaking transport details into UI state
 - host a web-specific BFF alongside the SPA when delivery concerns need a separate boundary
+- preserve a single correlated observability path across SPA, BFF, and API when telemetry becomes part of the system boundary
 
 ## Boundary And Relationships
 
@@ -84,6 +89,8 @@ The integrated local mode note adds a complementary pressure: the frontend shoul
 - optimistic or non-optimistic mutation flow decisions
 - empty, loading, success, and failure states
 - web-specific BFF response shaping, request aggregation, and auth/session handling
+- end-to-end telemetry context propagation across browser, BFF, and backend interactions
+- collector-based observability pipelines that keep browser telemetry out of direct token-bearing destinations
 
 ### Out Of Scope
 
@@ -111,6 +118,7 @@ The integrated local mode note adds a complementary pressure: the frontend shoul
 - `BackendContract`: the HTTP API consumed by the web app
 - `AuthClaims`: request headers or session-derived claims that determine whether the backend will authorize the action
 - `WebBFF`: a web-specific delivery adapter that can aggregate API calls and shape responses for the SPA
+- `TelemetryPipeline`: the path that correlates traces, logs, and metrics across SPA, BFF, and API
 
 ## Observed Workflow Shape
 
@@ -150,6 +158,7 @@ The current model assumes these flows still matter even though the implementatio
 - the repo may also benefit from an integrated local mode that runs the frontend against a locally orchestrated seeded backend for contract and flow validation
 - testability pressure may justify a mock-driven mode that exercises pages and states without depending on the contacts backend
 - the repo may also need a web-specific BFF boundary so SPA code does not absorb transport orchestration directly
+- the observability strategy may require explicit naming and correlation conventions so traces, metrics, and logs can be joined across layers
 
 ## Likely UI State Model
 
@@ -161,6 +170,7 @@ The current model assumes these flows still matter even though the implementatio
 - isolated-mode state that selects between live backend behavior and deterministic mock behavior
 - integrated-local-mode state that selects a full local service stack for real interaction and integration testing
 - BFF boundary state that decides which concerns belong in the web adapter versus the SPA
+- observability state that decides how telemetry is correlated, sampled, and exported across the browser, BFF, and backend
 
 ## Unresolved Tensions And Ambiguities
 
@@ -178,3 +188,5 @@ The current model assumes these flows still matter even though the implementatio
 - The repository does not yet define how an integrated local mode should relate to the isolated mode, the live backend contract, or the existing local dev command surface.
 - If integrated local mode becomes explicit, the boundary between real local service validation and external backend authority needs to stay clear so the two modes do not drift into one another.
 - The BFF summary introduces a SPA-versus-BFF boundary, but the current repository documents do not yet define which delivery concerns stay in the SPA and which move into the web adapter.
+- The observability strategy introduces a telemetry boundary that is broader than request logging and needs to be reconciled with the SPA/BFF/API split.
+- The repository does not yet define how traces, metrics, and logs should be named and correlated across the three runtime layers.
