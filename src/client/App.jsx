@@ -25,6 +25,18 @@ function routeFromPath(pathname) {
 
 export function App(props) {
   const [path, setPath] = createSignal(props.initialPath ?? currentPath());
+  const recordRouteTelemetry = (nextPath) => {
+    if (typeof props.apiClient?.recordTelemetry !== "function") {
+      return;
+    }
+
+    void props.apiClient.recordTelemetry("route_change", {
+      path: nextPath,
+      method: "GET",
+      statusCode: 200,
+    });
+  };
+
   const runtimeModeLabel = () => {
     if (props.runtimeMode === "isolated") {
       return "Isolated mode";
@@ -50,7 +62,9 @@ export function App(props) {
   };
 
   const handlePopState = () => {
-    setPath(currentPath());
+    const nextPath = currentPath();
+    setPath(nextPath);
+    recordRouteTelemetry(nextPath);
   };
 
   onMount(() => {
@@ -67,6 +81,7 @@ export function App(props) {
     }
     window.history.pushState({}, "", nextPath);
     setPath(nextPath);
+    recordRouteTelemetry(nextPath);
   };
 
   const route = () => routeFromPath(path());

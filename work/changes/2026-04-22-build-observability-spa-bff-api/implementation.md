@@ -9,10 +9,10 @@ Implemented the minimum observability pipeline slice for `contacts-web`.
 - forwarded the same telemetry context from the BFF to the backend gateway
 - added a `/api/telemetry` ingestion path on the BFF server
 - recorded browser page-view telemetry through the BFF instead of directly to the backend
+- recorded browser route-change telemetry from the SPA shell
 - kept the SPA, BFF, and backend testable as separate layers while still joining them by shared telemetry metadata
 
 ## Validation
 
 - `npm test`
 - `npm run build`
-

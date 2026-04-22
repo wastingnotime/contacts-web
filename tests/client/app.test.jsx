@@ -15,6 +15,10 @@ function createStubApiClient(initialContacts = []) {
   return {
     calls: [],
     state,
+    async recordTelemetry(eventName, detail) {
+      this.calls.push({ type: "telemetry", eventName, detail });
+      return null;
+    },
     async listContacts() {
       this.calls.push({ type: "list" });
       return [...state.contacts];
@@ -167,6 +171,26 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "Create contact" })).toBeInTheDocument();
   });
 
+  it("records route changes through browser-facing telemetry", async () => {
+    const apiClient = createStubApiClient();
+    mountApp(apiClient, "/");
+
+    await screen.findByText("No contacts yet");
+    fireEvent.click(screen.getByRole("button", { name: "Add first contact" }));
+
+    await waitFor(() => {
+      expect(apiClient.calls).toContainEqual({
+        type: "telemetry",
+        eventName: "route_change",
+        detail: {
+          path: "/new",
+          method: "GET",
+          statusCode: 200,
+        },
+      });
+    });
+  });
+
   it("validates required fields before creating a contact", async () => {
     const apiClient = createStubApiClient();
     mountApp(apiClient, "/new");
@@ -207,6 +231,15 @@ describe("App", () => {
         },
       },
       { type: "list" },
+      {
+        type: "telemetry",
+        eventName: "route_change",
+        detail: {
+          path: "/",
+          method: "GET",
+          statusCode: 200,
+        },
+      },
     ]);
   });
 
@@ -290,6 +323,15 @@ describe("App", () => {
         },
       },
       { type: "list" },
+      {
+        type: "telemetry",
+        eventName: "route_change",
+        detail: {
+          path: "/",
+          method: "GET",
+          statusCode: 200,
+        },
+      },
     ]);
   });
 
