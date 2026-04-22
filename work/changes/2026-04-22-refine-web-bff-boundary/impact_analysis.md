@@ -6,7 +6,7 @@ The BFF boundary changes the repository shape in three places:
 
 - the browser SPA can no longer be treated as the only delivery runtime
 - the direct browser-to-backend contact path moves behind the new web BFF
-- request aggregation and auth/session plumbing move into a web-specific adapter
+- request aggregation and claims plumbing move into a web-specific adapter
 - tests need to distinguish SPA behavior, BFF behavior, and backend contract mapping
 
 ## Areas Affected
@@ -47,7 +47,7 @@ The dev workflow should make it obvious when the browser is using the BFF rather
 - The BFF should not become a second source of domain truth.
 - The BFF should not be mixed into SPA components or hidden behind generic client helpers.
 - Mobile is expected to get its own BFF later, so this BFF must remain channel-specific.
-- Auth/session handling is still intentionally explicit at the BFF boundary and should not drift into a login UX in this slice.
+- Claims handling is still intentionally explicit at the BFF boundary and should not drift into a login UX in this slice.
 
 ## Follow-Up Pressure From EGD
 

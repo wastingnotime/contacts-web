@@ -22,7 +22,7 @@ It refines the browser -> TypeScript BFF -> backend shape for the current contac
 Early-phase rule:
 
 - `build` should make the SPA talk to the web BFF instead of directly to the backend API
-- `build` should make the web BFF own request aggregation, auth/session plumbing, and backend contract adaptation
+- `build` should make the web BFF own request aggregation, claims plumbing, and backend contract adaptation
 - `build` should implement the BFF in TypeScript with runtime validation at the boundary
 - `build` should not move domain rules, persistence, or backend authorization policy into the repository
 
@@ -48,7 +48,7 @@ Included in this slice:
 - add a TypeScript BFF server entrypoint and a typed gateway layer
 - keep backend contract mapping explicit in the BFF
 - preserve user-visible CRUD behavior while shifting delivery responsibility out of the SPA
-- keep auth/session handling explicit in the BFF boundary without introducing login UX
+- keep claims handling explicit in the BFF boundary without introducing login UX
 
 Contract map for this slice:
 
@@ -200,7 +200,7 @@ Failure surface:
 
 - the SPA and BFF are separate concerns in this repository
 - the browser uses delivery-facing shapes, not raw backend transport payloads
-- the BFF is the explicit boundary for request aggregation and auth/session plumbing
+- the BFF is the explicit boundary for request aggregation and claims plumbing
 - backend transport mapping is explicit and isolated
 - the browser must not silently collapse authorization failure into generic failure
 - TypeScript is justified in the BFF because this is the contract translation boundary, not a generic utility layer
@@ -233,14 +233,21 @@ The slice should avoid a full SPA TypeScript conversion or a broad shared packag
 - `WebBffContactsGateway`
   - list contacts
   - create contact
+- `ContactsWebBffClient`
+  - get contact
+  - update contact
+  - delete contact
 - `ContactsBackendGateway`
   - list contacts from the backend API
   - create contact against the backend API
+  - get contact from the backend API
+  - update contact against the backend API
+  - delete contact from the backend API
 - `ContactTransportMapper`
   - map backend list payloads into browser-facing contact models
   - map browser contact drafts into backend create payloads
   - map backend error shapes into user-facing categories when possible
-- auth-claim boundary
+- claims boundary
   - obtain or proxy claims for backend requests without hard-coding page-level assumptions
 
 Optional port:
