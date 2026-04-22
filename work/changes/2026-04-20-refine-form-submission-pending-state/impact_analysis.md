@@ -13,6 +13,7 @@ That creates a focused implementation pressure:
 - the browser should show that submit work is happening
 - repeat submit actions should stay disabled while the request runs
 - the existing success and failure flows should remain intact
+- the current implementation already exposes visible pending state on create and edit
 
 ## Contract Pressure
 

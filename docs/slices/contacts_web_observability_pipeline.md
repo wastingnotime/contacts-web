@@ -16,7 +16,7 @@ This slice does not change product behavior. It establishes the telemetry contra
 - Node.js plus TypeScript web BFF runtime
 - external `contacts-v2` API
 - controlled browser telemetry ingress through the BFF
-- backend export path that can later feed a collector or observability backend
+- backend export path that can feed a collector or observability backend
 
 Early-phase rule:
 
@@ -124,6 +124,7 @@ Failure conditions:
 - traces, metrics, and logs should stay distinct
 - shared metadata should make the three runtime layers joinable in analysis
 - observability should help explain user journeys and delivery bottlenecks without changing business behavior
+- the implemented telemetry path includes page-view and route-change events through the BFF
 
 ## Required Ports
 

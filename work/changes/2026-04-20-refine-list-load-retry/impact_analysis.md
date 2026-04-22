@@ -13,6 +13,7 @@ That creates a focused implementation pressure:
 - the browser should let the user retry the list fetch
 - the retry should remain local to the list page
 - existing create/edit/delete workflows should not change
+- the current implementation already adds the retry action to the error banner
 
 ## Contract Pressure
 

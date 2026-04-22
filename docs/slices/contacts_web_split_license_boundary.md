@@ -63,6 +63,7 @@ This slice keeps the distinction explicit before more content accumulates around
 - `contacts-web` implementation and product artifacts stay MPL 2.0
 - the root `LICENSE` should describe the split instead of pretending the repository is single-licensed
 - package metadata should not contradict the repository's product-side license choice
+- the current implementation already packages the split in root license files, package metadata, and the README
 
 ## Required Ports
 

@@ -49,6 +49,7 @@ Contract map for this slice:
 - submit pending is a browser state while the backend request is running
 - create and edit continue to use the existing contacts API client
 - success and failure continue to use the existing backend contract
+- the current implementation already disables repeat submit and navigation while pending
 
 Excluded from this slice:
 

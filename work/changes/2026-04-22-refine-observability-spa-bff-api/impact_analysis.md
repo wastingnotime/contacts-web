@@ -12,6 +12,7 @@ It touches:
 - telemetry ingestion and export paths
 - shared metadata conventions for cross-layer analysis
 - future scenario evaluation and living artifacts if telemetry reveals drift
+- the current implementation already includes page-view and route-change telemetry through the BFF
 
 ## Areas Affected
 

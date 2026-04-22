@@ -48,6 +48,7 @@ Contract map for this slice:
 
 - list retry is a browser action over the existing list request
 - successful retry reuses the same list contact contract
+- the current implementation already keeps retry local to the list banner
 
 Excluded from this slice:
 

@@ -55,6 +55,7 @@ Contract map for this slice:
 - stories do not call the live contacts backend
 - story state should remain deterministic across reloads
 - the preview runtime should be independent from the app router and the live bootstrap path
+- the current implementation already includes shell, form, list, and page stories with shared styling
 
 Excluded from this slice:
 

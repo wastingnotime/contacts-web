@@ -11,6 +11,7 @@ It touches:
 - README publication notes
 - decisions and slice docs
 - future contributor expectations about what belongs to the reusable MRL layer versus the product layer
+- the current repository package already reflects the split-license model
 
 ## Areas Affected
 

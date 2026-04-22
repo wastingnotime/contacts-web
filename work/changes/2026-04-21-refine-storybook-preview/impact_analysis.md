@@ -31,6 +31,7 @@ Storybook should use local fixtures and shared styles, but it should not become 
 - adding too many stories too early could dilute the focus of the preview surface
 - Storybook config could drift from the app styling if shared CSS is not loaded in preview
 - previewing the app shell directly could drift from the route shell if the app header logic is duplicated
+- the current implementation already covers the shell, component, and page preview surfaces
 
 ## Next Build Pressure
 
