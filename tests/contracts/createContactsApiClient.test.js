@@ -4,7 +4,7 @@ import { HttpContactsApiClient } from "../../src/client/api/httpContactsApiClien
 import { createContactsApiClient } from "../../src/client/api/createContactsApiClient";
 
 describe("createContactsApiClient", () => {
-  it("creates a live HTTP client by default", () => {
+  it("creates a browser-facing HTTP client by default", () => {
     const apiClient = createContactsApiClient({
       fetchFn: () => Promise.resolve(),
     });

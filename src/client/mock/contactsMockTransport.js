@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
-import { getContactSeedTransportContacts } from "../fixtures/contactSeeds";
+import { getContactSeedViewModels } from "../fixtures/contactSeeds";
 
-const INITIAL_CONTACTS = getContactSeedTransportContacts();
+const INITIAL_CONTACTS = getContactSeedViewModels();
 
 const state = {
   contacts: INITIAL_CONTACTS.map((contact) => ({ ...contact })),
@@ -17,19 +17,10 @@ function resetState() {
   state.nextContactNumber = INITIAL_CONTACTS.length + 1;
 }
 
-function isAdminRequest(request) {
-  const roles = request.headers.get("x-auth-roles") || "";
-  return roles
-    .split(",")
-    .map((role) => role.trim().toLowerCase())
-    .filter(Boolean)
-    .includes("admin");
-}
-
 function duplicateExists(payload, excludeContactId = null) {
-  const nextFirstName = payload.first_name.trim().toLowerCase();
-  const nextLastName = payload.last_name.trim().toLowerCase();
-  const nextPhoneNumber = payload.phone_number.trim().toLowerCase();
+  const nextFirstName = payload.firstName.trim().toLowerCase();
+  const nextLastName = payload.lastName.trim().toLowerCase();
+  const nextPhoneNumber = payload.phoneNumber.trim().toLowerCase();
 
   return state.contacts.some((contact) => {
     if (excludeContactId && contact.id === excludeContactId) {
@@ -37,9 +28,9 @@ function duplicateExists(payload, excludeContactId = null) {
     }
 
     return (
-      contact.first_name.trim().toLowerCase() === nextFirstName &&
-      contact.last_name.trim().toLowerCase() === nextLastName &&
-      contact.phone_number.trim().toLowerCase() === nextPhoneNumber
+      contact.firstName.trim().toLowerCase() === nextFirstName &&
+      contact.lastName.trim().toLowerCase() === nextLastName &&
+      contact.phoneNumber.trim().toLowerCase() === nextPhoneNumber
     );
   });
 }
@@ -49,7 +40,7 @@ function validatePayload(payload) {
     return false;
   }
 
-  return ["first_name", "last_name", "phone_number"].every(
+  return ["firstName", "lastName", "phoneNumber"].every(
     (field) => typeof payload[field] === "string" && payload[field].trim() !== "",
   );
 }
@@ -57,9 +48,9 @@ function validatePayload(payload) {
 function mapPayloadToContact(payload, contactId) {
   return {
     id: contactId,
-    first_name: payload.first_name,
-    last_name: payload.last_name,
-    phone_number: payload.phone_number,
+    firstName: payload.firstName,
+    lastName: payload.lastName,
+    phoneNumber: payload.phoneNumber,
   };
 }
 
@@ -91,18 +82,10 @@ export function resetContactsMockState() {
 
 export const contactsMockHandlers = [
   http.get("/api/contacts", ({ request }) => {
-    if (!isAdminRequest(request)) {
-      return forbiddenResponse();
-    }
-
     return HttpResponse.json(state.contacts.map(cloneContact));
   }),
 
   http.get("/api/contacts/:contactId", ({ request, params }) => {
-    if (!isAdminRequest(request)) {
-      return forbiddenResponse();
-    }
-
     const contact = state.contacts.find((item) => item.id === params.contactId);
     if (!contact) {
       return notFoundResponse();
@@ -112,10 +95,6 @@ export const contactsMockHandlers = [
   }),
 
   http.post("/api/contacts", async ({ request }) => {
-    if (!isAdminRequest(request)) {
-      return forbiddenResponse();
-    }
-
     const payload = await request.json();
     if (!validatePayload(payload)) {
       return validationResponse();
@@ -132,16 +111,12 @@ export const contactsMockHandlers = [
     return HttpResponse.json(created, {
       status: 201,
       headers: {
-        Location: `/contacts/${created.id}`,
+        Location: `/api/contacts/${created.id}`,
       },
     });
   }),
 
   http.put("/api/contacts/:contactId", async ({ request, params }) => {
-    if (!isAdminRequest(request)) {
-      return forbiddenResponse();
-    }
-
     const payload = await request.json();
     if (!validatePayload(payload)) {
       return validationResponse();
@@ -167,10 +142,6 @@ export const contactsMockHandlers = [
   }),
 
   http.delete("/api/contacts/:contactId", ({ request, params }) => {
-    if (!isAdminRequest(request)) {
-      return forbiddenResponse();
-    }
-
     const contactIndex = state.contacts.findIndex((item) => item.id === params.contactId);
     if (contactIndex < 0) {
       return notFoundResponse();

@@ -28,7 +28,13 @@ The MRL core defines:
 
 Implementation shape is selected through a pack.
 
-This repository currently adopts the `polyglot_client_server` pack. Other repositories may instead adopt:
+This repository currently adopts the `polyglot_client_server` pack. In this repository, that pack is interpreted as a multi-runtime browser delivery shape:
+
+- Solid SPA runtime
+- Node.js plus TypeScript web BFF runtime
+- external `contacts-v2` API runtime
+
+Other repositories may instead adopt:
 
 - `typescript_application`
 - `go_service`
@@ -41,7 +47,7 @@ If a repository changes pack, record the decision in `decisions.md` and update t
 
 ## Core Intent
 
-Within this repository, the system should behave like a **client/server browser application with an explicit backend contract boundary**.
+Within this repository, the system should behave like a **browser application with a Solid SPA and a separate web BFF, both behind an explicit backend contract boundary**.
 
 It should prefer:
 
@@ -50,8 +56,9 @@ It should prefer:
 - deterministic local tests over environment-heavy realism
 - testability and inspectability over premature framework sprawl
 - thin browser routes that compose behavior without owning backend truth
+- a channel-specific web BFF over mixing delivery concerns into SPA components
 
-This project is a **refinement environment** for the web interface, not a backend monolith and not a microservices platform.
+This project is a **refinement environment** for the web interface and its web BFF, not the backend domain owner and not a microservices platform.
 
 That statement is local to this selected pack. MRL as a workflow does not require one runtime and can support multi-process or multi-runtime systems when the model requires them.
 
@@ -59,16 +66,19 @@ That statement is local to this selected pack. MRL as a workflow does not requir
 
 The active repository target is:
 
-- one browser client under `src/client/`
-- no server implementation in this repository
+- one Solid browser SPA
+- one web BFF in the same repository
 - an explicit HTTP/API contract boundary to the contacts backend
-- tests split between client behavior and contract mapping
+- tests split between SPA behavior, BFF behavior, and contract mapping
 
 The repository therefore owns:
 
 - route semantics
 - page state
 - client-side validation for usability
+- web BFF request aggregation
+- web BFF auth/session plumbing
+- UI-oriented response shaping
 - backend transport mapping
 - user-visible success and failure feedback
 
@@ -77,38 +87,40 @@ The repository does not own:
 - backend persistence
 - authoritative contact invariants
 - backend auth implementation
+- backend domain logic
 
 ---
 
 ## Architectural Style For This Pack
 
-The project follows an explicit client/server split:
+The project follows an explicit browser/BFF/backend split:
 
 ```text
-tests/client/ ----------> client pages and workflow modules
-tests/contracts/ -------> transport mapping and gateway behavior
-src/client/pages/ ------> route-level workflow composition
-src/client/api/ --------> backend gateway
-src/client/contracts/ --> transport mapping and contract validation
-src/client/models/ -----> client-facing data shapes and local validation
+tests/spa/ --------------> browser pages and workflow modules
+tests/bff/ --------------> web adapter behavior and request shaping
+tests/contracts/ --------> transport mapping and gateway behavior
+apps/spa/ ---------------> Solid route-level workflow composition
+apps/bff/ ---------------> Node.js plus TypeScript web delivery adapter
+packages/shared/ ---------> shared contracts and client-facing data shapes
 ```
 
 A more explicit view:
 
 ```text
-src/
-  client/
-    api/
-    contracts/
-    models/
-    pages/
+apps/
+  spa/
+  bff/
+
+packages/
+  shared/
 
 tests/
-  client/
+  spa/
+  bff/
   contracts/
 ```
 
-This is the active repository shape for the current frontend slice, not a required layout for every MRL repository.
+This is the active repository shape for the current frontend plus BFF slice, not a required layout for every MRL repository.
 
 ### Layer responsibilities
 
@@ -164,9 +176,9 @@ The domain should avoid direct dependency on SQLite, HTTP clients, real queues m
 #### 4. Interfaces layer
 The interface layer exposes use cases in a convenient shape.
 
-For this project, an **API facade** is acceptable as a boundary adapter. It can:
+For this project, both a **web BFF facade** and an **API facade** are acceptable as boundary adapters. They can:
 
-- translate frontend-like requests into use-case inputs
+- translate browser-like requests into backend-facing inputs
 - compose response DTOs
 - simulate endpoints if needed
 

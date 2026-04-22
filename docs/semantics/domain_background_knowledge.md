@@ -17,6 +17,7 @@ This repository is the web interface for the `contacts` experience domain. The e
 - interface naming and stack direction from the Axiom naming reference
 - concrete user workflow evidence from the frozen legacy `contacts` repository
 - current backend boundary evidence from `contacts-v2`
+- BFF delivery-adapter guidance from the 2026-04-22 architecture summary
 
 That means evaluation should distinguish carefully between:
 
@@ -34,6 +35,8 @@ The naming reference establishes a structural split:
 Under that framing, `contacts-web` should be treated as a contacts-domain web surface, not as an `axiom` admin console. This matters because evaluation should reject accidental drift toward control-plane naming or responsibilities.
 
 The same reference chooses Solid as the current technology direction for `contacts-web`. That should be treated as implementation guidance, not business truth, but it does explain why the new repository should preserve workflows instead of preserving the legacy Mithril code structure.
+
+The BFF summary adds another implementation-direction signal: if `contacts-web` owns a web-specific BFF, the repository should keep delivery concerns separate from the SPA and treat the BFF as a channel-specific adapter rather than a second source of domain truth.
 
 ## Common Expectations For Contact Web Apps
 
@@ -59,6 +62,13 @@ For a browser-facing contacts interface, correctness is not only about backend r
 
 Even a narrow CRUD frontend needs explicit choices for these behaviors or it will feel broken despite a correct backend.
 
+For a web-specific BFF, the same principle applies at the delivery layer:
+
+- the BFF should aggregate backend calls when that simplifies browser interaction
+- the BFF should adapt backend responses to UI shape without redefining business rules
+- auth/session handling belongs in the BFF only when it is required for the web channel
+- the BFF should not become shared infrastructure for other channels
+
 ## Testability Background
 
 Frontend testability improves when UI behavior can be separated from live transport concerns.
@@ -78,6 +88,12 @@ An integrated local mode typically helps when the team wants:
 
 The important boundary is that isolated-mode mocks should support UI development and specification, not quietly become a second source of business truth.
 
+For a BFF-enabled repository, that same boundary should also separate:
+
+- SPA-only preview and interaction checks
+- BFF contract mapping tests
+- full local integration against the backend API
+
 ## Backend-Contract Background
 
 The legacy repository and `contacts-v2` expose similar CRUD intent but not identical contracts.
@@ -96,6 +112,8 @@ Observed differences already matter for frontend evaluation:
 
 This repository therefore likely needs a contract-mapping layer rather than letting backend transport naming leak directly into every component.
 
+The BFF summary suggests that contract-mapping pressure may be more explicit than a simple client API wrapper: the repository may want a dedicated web BFF that owns browser-facing aggregation, auth/session plumbing, and response adaptation.
+
 ## Standard Artifacts Or Outputs The Domain Often Implies
 
 - contacts list page
@@ -107,6 +125,7 @@ This repository therefore likely needs a contract-mapping layer rather than lett
 - transport adapters between UI models and backend payloads
 - auth claim plumbing or a deliberate abstraction over it
 - mock transport or isolated-mode fixtures for UI-only iteration
+- web BFF route or adapter boundary for browser-specific delivery concerns
 
 ## Industry Language Worth Preserving
 
@@ -136,6 +155,8 @@ This repository therefore likely needs a contract-mapping layer rather than lett
 - treating isolated-mode mocks as if they were authoritative domain behavior
 - letting backend-free UI shortcuts diverge from the real contract without a clear boundary
 - treating an integrated local dev stack as a substitute for the external backend contract instead of a local validation surface
+- letting a web BFF absorb domain rules that should remain in the backend API
+- letting the SPA and BFF merge into one indistinct component tree
 
 ## Specific Gaps Observed In The Reference Baseline
 

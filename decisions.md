@@ -39,6 +39,37 @@ Any additional implementation guidance, migration note, or follow-up.
 
 Add entries as the repository evolves.
 
+## DEC-0006 - Keep The Web BFF In The Contacts-Web Repo
+
+- Date: 2026-04-22
+- Status: accepted
+- Owners: both
+
+### Context
+The extracted BFF architecture summary argues for a web-specific Backend for Frontend that lives alongside the Solid SPA in `contacts-web`, while the domain/API backend remains a separate repository. The current repo docs still describe a single browser client boundary, so the delivery shape needs an explicit decision.
+
+### Decision
+The repository now treats `contacts-web` as a multi-runtime web delivery repository containing:
+
+- a Solid SPA
+- a Node.js plus TypeScript web BFF
+- shared browser-facing contracts where useful
+
+The BFF is a separate app, not a mixed concern inside SPA components. The repo does not own backend domain logic, persistence, or backend authorization policy. Mobile may later adopt its own BFF rather than sharing this one.
+
+### Consequences
+The repository gains a clearer separation between interaction/rendering and delivery adaptation. SPA code can stay focused on browser behavior while the BFF owns request aggregation, auth/session plumbing, and UI-oriented response shaping.
+
+The trade-off is that local development, tests, and structure need to account for two runtime surfaces instead of one.
+
+### Alternatives considered
+Keep the BFF as an internal module inside the SPA. This was rejected because it would blur delivery concerns into UI code and make the boundary harder to evolve per channel.
+
+Move the BFF into a separate repository. This was rejected for the current phase because the same team owns SPA and BFF, and the summary explicitly favors single-PR iteration and lower coordination overhead.
+
+### Notes
+Target structure should evolve toward `apps/spa/`, `apps/bff/`, and `packages/shared/` where needed. The backend domain/API stays external in `contacts-v2`.
+
 ## DEC-0001 - Separate MRL Core From Implementation Packs
 
 - Date: 2026-03-29

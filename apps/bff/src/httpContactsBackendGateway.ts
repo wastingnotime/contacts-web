@@ -1,17 +1,20 @@
 import {
-  ContactApiError,
   mapResponseToApiError,
-} from "../contracts/contactTransport";
+} from "../../../src/client/contracts/contactTransport.js";
 
-export class HttpContactsApiClient {
-  constructor({ baseUrl, fetchFn }) {
+export class HttpContactsBackendGateway {
+  constructor({ baseUrl, authSubject, authRoles, fetchFn }) {
     this.baseUrl = baseUrl;
+    this.authSubject = authSubject;
+    this.authRoles = authRoles;
     this.fetchFn = fetchFn;
   }
 
   requestHeaders(jsonBody = false) {
     const headers = {
       Accept: "application/json",
+      "x-auth-subject": this.authSubject,
+      "x-auth-roles": this.authRoles,
     };
 
     if (jsonBody) {
@@ -34,12 +37,11 @@ export class HttpContactsApiClient {
     return response.json();
   }
 
-  async createContact(draft) {
-    const body = JSON.stringify(draft);
+  async createContact(payload) {
     const response = await this.fetchFn(`${this.baseUrl}/contacts`, {
       method: "POST",
       headers: this.requestHeaders(true),
-      body,
+      body: JSON.stringify(payload),
     });
 
     if (response.status === 201) {
@@ -55,7 +57,7 @@ export class HttpContactsApiClient {
       throw mapResponseToApiError(response, "Unable to create contact.");
     }
 
-    throw new ContactApiError("Unexpected create-contact response.", "unknown");
+    throw new Error("Unexpected create-contact response.");
   }
 
   async getContact(contactId) {
@@ -71,12 +73,11 @@ export class HttpContactsApiClient {
     return response.json();
   }
 
-  async updateContact(contactId, draft) {
-    const body = JSON.stringify(draft);
+  async updateContact(contactId, payload) {
     const response = await this.fetchFn(`${this.baseUrl}/contacts/${contactId}`, {
       method: "PUT",
       headers: this.requestHeaders(true),
-      body,
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {

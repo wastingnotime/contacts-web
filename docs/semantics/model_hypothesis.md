@@ -18,10 +18,14 @@ Use it during `extract`, `refine`, and `build` to define vocabulary, boundaries,
 - backend contract inventory: `work/sources/contacts_v2_api_contract_inventory.md`
 - isolated mode note from `/home/henrique/Downloads/isolated_mode.md` describing a backend-free UI iteration path
 - integrated local mode note from `/home/henrique/Downloads/integrated_local_mode.md` describing a multi-service local development and integration path
+- BFF architecture summary from `/home/henrique/Downloads/bff-architecture-summary.md` describing a web-specific delivery adapter for `contacts-web`
+- BFF architecture summary inventory: `work/sources/bff_architecture_summary_inventory.md`
 
 ## Current Hypothesis
 
 `contacts-web` is the web experience surface for the `contacts` domain. Its near-term responsibility is to let a human user perform contact workflows through a browser while keeping the business source of truth in the backend.
+
+The BFF summary adds a second delivery-layer pressure: the repository may need to house both the Solid SPA and a web-specific BFF, with the BFF acting as a delivery adapter between browser interactions and the backend API.
 
 This repository is not the backend domain owner. It is the browser-facing interface that presents contact workflows, route transitions, form state, and API interaction against a contacts backend. The current backend reference is `contacts-v2`.
 
@@ -54,6 +58,8 @@ The current backend contract from `contacts-v2` is a narrow admin CRUD API with 
 
 The historical UI implemented that workflow in Mithril plus Redux. The current direction for this repository is to preserve the workflow while intentionally changing the web stack to Solid.
 
+The BFF summary suggests the repository may also need a separate web app boundary inside the same repo, so SPA behavior and delivery-adapter behavior can evolve together without becoming one mixed component tree.
+
 The isolated mode note adds a second pressure on the repository: the frontend should be easy to exercise without a live backend when the goal is UI iteration, edge-state inspection, or deterministic testing. That suggests an intentional local mode with mock API behavior and no backend dependency may be useful as an evaluation and development path, provided it stays separate from the contacts backend contract.
 
 The integrated local mode note adds a complementary pressure: the frontend should also be easy to exercise with real local service interaction when the goal is contract validation, flow debugging, or integration testing. That suggests a second intentional local mode that runs the frontend with a seeded backend and local database through Docker Compose, while still keeping it separate from the external production backend contract.
@@ -65,6 +71,7 @@ The integrated local mode note adds a complementary pressure: the frontend shoul
 - preserve user-facing behavior separately from backend implementation details
 - validate how the `contacts` experience should feel on the web before introducing broader product scope
 - map the current frontend-friendly contract to the backend's snake_case HTTP shape without leaking transport details into UI state
+- host a web-specific BFF alongside the SPA when delivery concerns need a separate boundary
 
 ## Boundary And Relationships
 
@@ -76,6 +83,7 @@ The integrated local mode note adds a complementary pressure: the frontend shoul
 - user-visible validation and error handling
 - optimistic or non-optimistic mutation flow decisions
 - empty, loading, success, and failure states
+- web-specific BFF response shaping, request aggregation, and auth/session handling
 
 ### Out Of Scope
 
@@ -83,6 +91,7 @@ The integrated local mode note adds a complementary pressure: the frontend shoul
 - backend authorization implementation
 - deployment or runtime concerns owned by the backend repository
 - control-plane concerns that belong to `axiom-*` interfaces
+- domain rules that must remain owned by the backend API
 
 ### Upstream / Downstream Relationship
 
@@ -101,6 +110,7 @@ The integrated local mode note adds a complementary pressure: the frontend shoul
 - `ContactFormView`: route state that creates or edits one contact
 - `BackendContract`: the HTTP API consumed by the web app
 - `AuthClaims`: request headers or session-derived claims that determine whether the backend will authorize the action
+- `WebBFF`: a web-specific delivery adapter that can aggregate API calls and shape responses for the SPA
 
 ## Observed Workflow Shape
 
@@ -139,6 +149,7 @@ The current model assumes these flows still matter even though the implementatio
 - the repo may benefit from a backend-free isolated mode for faster UI development and deterministic edge-state inspection
 - the repo may also benefit from an integrated local mode that runs the frontend against a locally orchestrated seeded backend for contract and flow validation
 - testability pressure may justify a mock-driven mode that exercises pages and states without depending on the contacts backend
+- the repo may also need a web-specific BFF boundary so SPA code does not absorb transport orchestration directly
 
 ## Likely UI State Model
 
@@ -149,6 +160,7 @@ The current model assumes these flows still matter even though the implementatio
 - user-visible error state scoped to route or form
 - isolated-mode state that selects between live backend behavior and deterministic mock behavior
 - integrated-local-mode state that selects a full local service stack for real interaction and integration testing
+- BFF boundary state that decides which concerns belong in the web adapter versus the SPA
 
 ## Unresolved Tensions And Ambiguities
 
@@ -165,3 +177,4 @@ The current model assumes these flows still matter even though the implementatio
 - If isolated mode becomes explicit, the boundary between live contract tests and mock-driven UI tests needs to stay clear so the two modes do not drift into one another.
 - The repository does not yet define how an integrated local mode should relate to the isolated mode, the live backend contract, or the existing local dev command surface.
 - If integrated local mode becomes explicit, the boundary between real local service validation and external backend authority needs to stay clear so the two modes do not drift into one another.
+- The BFF summary introduces a SPA-versus-BFF boundary, but the current repository documents do not yet define which delivery concerns stay in the SPA and which move into the web adapter.

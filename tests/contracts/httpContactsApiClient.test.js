@@ -16,16 +16,16 @@ function createResponse({ ok = true, status = 200, jsonBody = null, textBody = "
 }
 
 describe("HttpContactsApiClient", () => {
-  it("loads, updates, and deletes contacts through the backend contract", async () => {
+  it("loads, updates, and deletes contacts through the browser-facing BFF contract", async () => {
     const fetchFn = vi.fn(async (url, options = {}) => {
       if (url.endsWith("/contacts") && options.method === "GET") {
         return createResponse({
           jsonBody: [
             {
               id: "contact-1",
-              first_name: "Ada",
-              last_name: "Lovelace",
-              phone_number: "5550001",
+              firstName: "Ada",
+              lastName: "Lovelace",
+              phoneNumber: "5550001",
             },
           ],
         });
@@ -35,9 +35,9 @@ describe("HttpContactsApiClient", () => {
         return createResponse({
           jsonBody: {
             id: "contact-1",
-            first_name: "Ada",
-            last_name: "Lovelace",
-            phone_number: "5550001",
+            firstName: "Ada",
+            lastName: "Lovelace",
+            phoneNumber: "5550001",
           },
         });
       }
@@ -45,16 +45,16 @@ describe("HttpContactsApiClient", () => {
       if (url.endsWith("/contacts/contact-1") && options.method === "PUT") {
         expect(JSON.parse(options.body)).toEqual({
           id: "contact-1",
-          first_name: "Ada",
-          last_name: "Byron",
-          phone_number: "5550009",
+          firstName: "Ada",
+          lastName: "Byron",
+          phoneNumber: "5550009",
         });
         return createResponse({
           jsonBody: {
             id: "contact-1",
-            first_name: "Ada",
-            last_name: "Byron",
-            phone_number: "5550009",
+            firstName: "Ada",
+            lastName: "Byron",
+            phoneNumber: "5550009",
           },
         });
       }
@@ -107,7 +107,7 @@ describe("HttpContactsApiClient", () => {
     expect(fetchFn).toHaveBeenCalledTimes(4);
   });
 
-  it("sends backend claims headers on every request", async () => {
+  it("sends browser-facing payloads through the BFF endpoint", async () => {
     const fetchFn = vi.fn(async (url, options = {}) => {
       if (url.endsWith("/contacts") && options.method === "GET") {
         return createResponse({
@@ -117,23 +117,24 @@ describe("HttpContactsApiClient", () => {
 
       if (url.endsWith("/contacts") && options.method === "POST") {
         expect(JSON.parse(options.body)).toEqual({
-          first_name: "Grace",
-          last_name: "Hopper",
-          phone_number: "555-0100",
+          id: "",
+          firstName: "Grace",
+          lastName: "Hopper",
+          phoneNumber: "555-0100",
         });
         return createResponse({
           status: 201,
           jsonBody: {
             id: "contact-1",
-            first_name: "Grace",
-            last_name: "Hopper",
-            phone_number: "555-0100",
+            firstName: "Grace",
+            lastName: "Hopper",
+            phoneNumber: "555-0100",
           },
           textBody: JSON.stringify({
             id: "contact-1",
-            first_name: "Grace",
-            last_name: "Hopper",
-            phone_number: "555-0100",
+            firstName: "Grace",
+            lastName: "Hopper",
+            phoneNumber: "555-0100",
           }),
         });
       }
@@ -143,8 +144,6 @@ describe("HttpContactsApiClient", () => {
 
     const apiClient = new HttpContactsApiClient({
       baseUrl: "",
-      authSubject: "admin-user",
-      authRoles: "admin",
       fetchFn,
     });
 
@@ -158,13 +157,9 @@ describe("HttpContactsApiClient", () => {
 
     expect(fetchFn.mock.calls[0][1].headers).toMatchObject({
       Accept: "application/json",
-      "x-auth-subject": "admin-user",
-      "x-auth-roles": "admin",
     });
     expect(fetchFn.mock.calls[1][1].headers).toMatchObject({
       Accept: "application/json",
-      "x-auth-subject": "admin-user",
-      "x-auth-roles": "admin",
       "Content-Type": "application/json",
     });
   });
