@@ -6,13 +6,14 @@ Document the main tensions and architectural pressure created by the frontend-fa
 
 ## Main Tension
 
-`contacts-web` is a browser experience, but the backend contract it consumes is a claims-based admin CRUD API with snake_case payloads.
+`contacts-web` is a browser experience, but the backend contract it consumes is a claims-based admin CRUD API with snake_case payloads, reached through the BFF boundary.
 
 That creates a direct implementation pressure:
 
 - the UI should speak in experience-language terms such as `firstName`, `lastName`, and `phoneNumber`
 - the transport boundary must convert those fields to `first_name`, `last_name`, and `phone_number`
 - route-level behavior must make auth, validation, not-found, and duplicate responses visible without leaking backend transport details into every component
+- the browser should treat the BFF as the request boundary, not the backend itself
 
 ## Contract Pressure
 
@@ -41,9 +42,9 @@ That means the first frontend slice should not be a generic page skeleton. It sh
 
 ## Refine Decision
 
-Keep the first build slice limited to list and create, but make the contract adapter explicit enough that later edit and delete work can reuse the same boundary.
+Keep the first build slice limited to list and create, but make the contract adapter explicit enough that later edit and delete work can reuse the same boundary through the BFF.
 
-Do not fold auth handling into generic UI state. Treat it as a specific backend contract concern that the browser may need to surface or proxy.
+Do not fold auth handling into generic UI state. Treat it as a specific backend contract concern that the browser may need to surface or proxy, with the BFF remaining the request seam.
 
 ## Follow-Up
 

@@ -5,7 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice extends the Solid browser client with edit and delete workflows while reusing the contract-mapping boundary already established for list and create.
-The current implementation reuses the same transport mapper, request-claims boundary, and error mapping for list, create, edit, and delete.
+The current implementation reuses the same transport mapper, request-claims boundary, and error mapping for list, create, edit, and delete, with the browser reaching that contract through the BFF boundary.
 
 ## Selected Pack
 
@@ -14,26 +14,27 @@ The current implementation reuses the same transport mapper, request-claims boun
 ## Runtime Targets
 
 - Solid browser client runtime
-- HTTP backend contract represented as an external server boundary
+- Node.js plus TypeScript web BFF runtime
+- HTTP backend contract represented behind the BFF boundary
 - deterministic client-side test doubles for backend interaction during build
 
 Early-phase rule:
 
-- `build` should extend the existing browser runtime and adapter boundary
+- `build` should extend the existing browser runtime and adapter boundary, keeping the BFF as the delivery seam
 - `build` should not duplicate backend rules from `contacts-v2`
 - backend interaction should remain covered by mocked or recording client adapters and focused contract tests
 
 ## Architecture Mode
 
-- frontend-first client/server split
-- explicit transport adapter between UI state and backend payloads
+- frontend-first client/BFF/backend split
+- explicit transport adapter between UI state and backend payloads, with the BFF owning the browser-facing delivery seam
 - route-level composition over small workflow-specific client models
 
 Interpretation:
 
 - this repository owns browser behavior, route semantics, and user feedback
 - this repository does not own persistence or authoritative contact validation
-- the adapter boundary should continue to isolate backend naming, auth semantics, and response categories from page components
+- the adapter boundary should continue to isolate backend naming, auth semantics, and response categories from page components, even though the BFF now fronts the backend
 
 ## Discovery Scope
 
@@ -46,6 +47,7 @@ Included in this slice:
 - keep path ID authoritative for update requests
 - surface authorization, validation, not-found, and duplicate-style failures clearly
 - reuse the same transport mapper and request-status model from the list/create slice
+- keep the BFF as the browser-facing request boundary for edit and delete
 
 Contract map for this slice:
 
@@ -203,6 +205,7 @@ Error mapping:
 - delete remains deliberate and visible
 - the browser must not silently discard user work on failed update
 - auth concerns remain explicit and should not be collapsed into a generic page-level error bucket
+- the browser should treat the BFF as the request boundary, not the contacts backend itself
 
 ## Client Model Shape Hypothesis
 

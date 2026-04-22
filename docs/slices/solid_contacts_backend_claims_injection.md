@@ -6,7 +6,7 @@ Define the next executable vertical slice for `contacts-web`.
 
 This slice keeps the existing Solid browser client and contract-mapping boundary, but makes backend request claims explicit so the local backend contract can be exercised end to end without introducing login UX.
 The current implementation threads those explicit claims through the contacts API client and backend gateway instead of hiding them in page components.
-The current implementation keeps the claims source config-backed in the BFF so the boundary stays explicit without inventing login UX.
+The current implementation keeps the claims source config-backed in the BFF so the boundary stays explicit without inventing login UX or pushing claim logic into the browser.
 
 ## Selected Pack
 
@@ -15,19 +15,20 @@ The current implementation keeps the claims source config-backed in the BFF so t
 ## Runtime Targets
 
 - Solid browser client runtime
-- HTTP backend contract represented as an external server boundary
+- Node.js plus TypeScript BFF runtime
+- HTTP backend contract represented behind the BFF boundary
 - deterministic client-side test doubles for backend interaction during build
 
 Early-phase rule:
 
-- `build` should add a boundary for request claims and preserve the existing transport adapter shape
+- `build` should add a boundary for request claims and preserve the existing transport adapter shape, with the BFF owning the claims source
 - `build` should not introduce login, session storage, or token refresh workflows
 - `build` should keep the BFF claims source explicit and configurable
 - backend interaction should remain covered by mocked or recording client adapters and focused contract tests
 
 ## Architecture Mode
 
-- frontend-first client/server split
+- frontend-first client/BFF/backend split
 - explicit transport adapter between UI state and backend payloads
 - explicit config-backed request-claims boundary for backend calls
 
@@ -35,7 +36,7 @@ Interpretation:
 
 - this repository owns browser behavior, route semantics, and user feedback
 - this repository does not own auth identity providers or backend authorization policy
-- the adapter boundary should continue to isolate backend naming, claims semantics, and response categories from page components
+- the adapter boundary should continue to isolate backend naming, claims semantics, and response categories from page components while the BFF remains the request boundary
 
 ## Discovery Scope
 
@@ -46,6 +47,7 @@ Included in this slice:
 - surface authorization failures clearly when the backend rejects a request
 - reuse the existing `ContactsApiClient` and `ContactTransportMapper`
 - keep list/create/edit/delete workflows unchanged apart from claim plumbing
+- keep the BFF config layer as the single source of request-claims behavior
 
 Contract map for this slice:
 
@@ -55,6 +57,7 @@ Contract map for this slice:
 - the adapter must preserve backend `403` categories when mapping user-visible failures
 - claims are a request concern, not a browser login workflow
 - diagnostic runtime routes such as `/healthz` and `/events` remain outside the browser workflow
+- the BFF should own the explicit claims source and forward the request boundary to the backend
 
 Excluded from this slice:
 

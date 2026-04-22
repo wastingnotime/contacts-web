@@ -5,7 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice makes duplicate and missing-record responses explicit in the browser copy instead of leaving them as generic backend messages.
-The current implementation keeps duplicate and missing-record copy local to the shared error helper and the affected workflow pages.
+The current implementation keeps duplicate and missing-record copy local to the shared error helper and the affected workflow pages, with the browser still reaching the contract through the BFF boundary.
 
 ## Selected Pack
 
@@ -14,18 +14,18 @@ The current implementation keeps duplicate and missing-record copy local to the 
 ## Runtime Targets
 
 - Solid browser client runtime
-- HTTP backend contract represented as an external server boundary
+- BFF-mediated backend contract boundary
 - deterministic client-side test doubles for backend interaction during build
 
 Early-phase rule:
 
-- `build` should translate duplicate and missing-record errors into clearer browser states
+- `build` should translate duplicate and missing-record errors into clearer browser states without changing the BFF-backed request path
 - `build` should not change backend transport, claims, or login behavior
 - backend interaction should remain covered by mocked or recording client adapters and focused contract tests
 
 ## Architecture Mode
 
-- frontend-first client/server split
+- frontend-first client/BFF/backend split
 - explicit transport adapter between UI state and backend payloads
 - visible conflict and missing-record feedback for form and delete workflows
 
@@ -33,7 +33,7 @@ Interpretation:
 
 - this repository owns browser behavior, route semantics, and user feedback
 - this repository does not own persistence or backend authorization policy
-- create, edit, and delete should show deliberate copy when the backend reports a duplicate or missing record
+- create, edit, and delete should show deliberate copy when the backend reports a duplicate or missing record, regardless of the BFF request hop
 
 ## Discovery Scope
 
@@ -43,6 +43,7 @@ Included in this slice:
 - show a clear missing-record message when edit or delete targets no longer exist
 - keep validation, authorization, and pending handling intact
 - preserve the existing request boundaries
+- keep the browser-facing copy distinct from the transport-level failure semantics
 
 Contract map for this slice:
 

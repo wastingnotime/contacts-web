@@ -5,7 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice makes authorization failures visible and consistent across the Solid browser client without introducing login UX or changing the backend contract boundary.
-The current implementation already treats `403` as a distinct browser-visible state across the contacts workflows.
+The current implementation already treats `403` as a distinct browser-visible state across the BFF-backed contacts workflows.
 
 ## Selected Pack
 
@@ -14,18 +14,18 @@ The current implementation already treats `403` as a distinct browser-visible st
 ## Runtime Targets
 
 - Solid browser client runtime
-- HTTP backend contract represented as an external server boundary
+- BFF-mediated backend contract boundary
 - deterministic client-side test doubles for backend interaction during build
 
 Early-phase rule:
 
-- `build` should keep the existing contacts client and add a shared authorization-failure mapping boundary
+- `build` should keep the existing contacts client and add a shared authorization-failure mapping boundary that sits above the BFF request seam
 - `build` should not introduce login, session storage, or token refresh workflows
 - backend interaction should remain covered by mocked or recording client adapters and focused contract tests
 
 ## Architecture Mode
 
-- frontend-first client/server split
+- frontend-first client/BFF/backend split
 - explicit transport adapter between UI state and backend payloads
 - shared failure-mapping helper for backend request categories
 
@@ -33,7 +33,7 @@ Interpretation:
 
 - this repository owns browser behavior, route semantics, and user feedback
 - this repository does not own auth identity providers or backend authorization policy
-- the browser should present `403` as a distinct user-facing state instead of collapsing it into generic loading or save failure messaging
+- the browser should present `403` as a distinct user-facing state instead of collapsing it into generic loading or save failure messaging, regardless of whether the request arrives through the BFF or another client adapter
 
 ## Discovery Scope
 
@@ -43,6 +43,7 @@ Included in this slice:
 - reuse the existing `ContactsApiClient` and transport mapping boundary
 - add a shared helper for translating backend error categories into browser-facing messages
 - keep request claims and transport naming unchanged
+- keep the BFF request boundary in place while making `403` explicit
 
 Contract map for this slice:
 

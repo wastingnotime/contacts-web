@@ -5,7 +5,7 @@
 Define the first executable vertical slice for `contacts-web`.
 
 This slice should establish the new frontend direction explicitly while staying narrow enough to build deterministically from an empty repository.
-The current implementation keeps this slice as the base list/create contract-mapping boundary for the Solid browser client.
+The current implementation keeps this slice as the base list/create contract-mapping boundary for the Solid browser client, with the browser now calling through the BFF instead of reaching the contacts backend directly.
 
 ## Selected Pack
 
@@ -14,26 +14,27 @@ The current implementation keeps this slice as the base list/create contract-map
 ## Runtime Targets
 
 - Solid browser client runtime
-- HTTP backend contract represented as an external server boundary
+- Node.js plus TypeScript web BFF runtime
+- HTTP backend contract represented behind the BFF boundary
 - local deterministic test doubles for backend interaction during build
 
 Early-phase rule:
 
-- `build` should implement the browser runtime and the contract adapter in this repository
+- `build` should implement the browser runtime and the contract adapter in this repository, routed through the BFF boundary
 - `build` should not implement or copy backend business logic from `contacts-v2`
 - backend interaction should be validated through mocked or recording client adapters and focused contract tests rather than a full deployed backend
 
 ## Architecture Mode
 
-- frontend-first client/server split
-- explicit transport adapter between UI state and backend payloads
+- frontend-first client/BFF/backend split
+- explicit transport adapter between UI state and backend payloads, with the BFF owning the browser-facing delivery seam
 - thin route-level workflow composition over reusable domain-light client models
 
 Interpretation:
 
 - this repository owns browser behavior, route semantics, and user feedback
 - this repository does not own contact persistence or authoritative domain validation
-- the transport boundary must be explicit so backend naming and error-shape drift do not leak into every component
+- the transport boundary must be explicit so backend naming and error-shape drift do not leak into every component, even though the browser now reaches that contract through the BFF
 
 ## Discovery Scope
 
@@ -46,6 +47,7 @@ Included in this slice:
 - create one contact through the backend adapter
 - map UI contact fields to backend transport fields explicitly
 - represent loading, success, and failure states for list and create flows
+- keep the BFF as the browser's delivery boundary for contacts requests
 
 Contract map for this slice:
 
@@ -177,6 +179,7 @@ Error mapping:
 - create must not silently discard user input on failure
 - the first slice must prefer clear, deterministic user feedback over optimistic behavior
 - auth concerns remain explicit and should not be collapsed into a generic page-level error bucket
+- the browser should treat the BFF as the request boundary, not the contacts backend itself
 
 ## Client Model Shape Hypothesis
 

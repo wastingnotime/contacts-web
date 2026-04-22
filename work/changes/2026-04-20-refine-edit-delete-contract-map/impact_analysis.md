@@ -6,7 +6,7 @@ Document the architectural pressure introduced by the edit/delete slice before i
 
 ## Main Tension
 
-The browser app now has to do more than create and list contacts. It must load a specific record, let the user edit it, and remove it from the visible list while preserving backend contract semantics.
+The browser app now has to do more than create and list contacts. It must load a specific record, let the user edit it, and remove it from the visible list while preserving backend contract semantics through the BFF boundary.
 
 That creates several pressures:
 
@@ -14,6 +14,7 @@ That creates several pressures:
 - update must preserve path-authoritative identity and surface body/path mismatch clearly
 - delete must be visible and recoverable when unauthorized or missing
 - the same transport mapper has to serve list, create, edit, and delete without turning into a generic HTTP bag
+- the browser-facing request seam should remain BFF-mediated
 
 ## Contract Pressure
 
@@ -30,6 +31,7 @@ The browser slice should therefore establish:
 - a delete action state
 - a repeatable mapping from backend record shape to UI form state
 - failure handling that distinguishes validation, not-found, duplicate/conflict, and authorization problems
+- a BFF-mediated browser request boundary for the edit/delete workflow
 
 ## Areas Impacted
 
@@ -40,7 +42,7 @@ The browser slice should therefore establish:
 
 ## Refine Decision
 
-Keep edit and delete within the same transport contract boundary used by list and create.
+Keep edit and delete within the same transport contract boundary used by list and create, and keep that boundary routed through the BFF.
 
 Do not introduce separate client abstractions for each route unless the implementation proves that a shared adapter is too weak.
 

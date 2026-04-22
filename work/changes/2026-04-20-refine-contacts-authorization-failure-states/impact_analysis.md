@@ -6,13 +6,14 @@ Document the architectural pressure created by surfacing authorization failures 
 
 ## Main Tension
 
-The backend is already distinguishing authorization from other request failures, but the browser can still hide that distinction in generic error messaging.
+The backend is already distinguishing authorization from other request failures, but the browser can still hide that distinction in generic error messaging even when requests pass through the BFF.
 
 That creates a focused implementation pressure:
 
 - list, create, edit, and delete must each treat `403` as its own category
 - the user should stay on the current workflow state when authorization fails
 - authorization failures should not be mistaken for validation, duplicate, or not-found problems
+- the BFF request seam should remain visible in the implementation shape
 
 ## Contract Pressure
 
@@ -43,6 +44,7 @@ Keep the slice narrow:
 - do not change the claims boundary
 - do not change transport naming or request payload shape
 - only make the authorization category visible and consistent
+- preserve the current BFF-backed request path
 
 ## Follow-Up
 

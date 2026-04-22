@@ -6,7 +6,7 @@ Document the architectural pressure created by making duplicate and missing-reco
 
 ## Main Tension
 
-The browser already receives backend error codes for duplicate and missing records, but the user-facing copy is not yet deliberately shaped around those cases.
+The browser already receives backend error codes for duplicate and missing records, but the user-facing copy is not yet deliberately shaped around those cases, even with the BFF in the request path.
 
 That creates a focused implementation pressure:
 
@@ -16,7 +16,7 @@ That creates a focused implementation pressure:
 
 ## Contract Pressure
 
-The backend contract does not need to change. The browser just needs to translate the existing error categories into clearer user-facing copy.
+The backend contract does not need to change. The browser just needs to translate the existing error categories into clearer user-facing copy while preserving the BFF-mediated request path.
 
 The next slice should therefore establish:
 
@@ -37,6 +37,7 @@ Keep the conflict and missing-record messages local and small:
 - no new error taxonomy
 - no backend changes
 - no route redesign
+- no change to the BFF request boundary
 
 ## Follow-Up
 

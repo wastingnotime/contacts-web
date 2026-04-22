@@ -6,11 +6,11 @@ Document the architectural pressure introduced by explicit backend request claim
 
 ## Main Tension
 
-The frontend already knows how to map contacts payloads, but the backend requires claims-like headers on CRUD requests.
+The frontend already knows how to map contacts payloads, but the BFF-backed request path still requires claims-like headers on CRUD requests.
 
 That creates a narrow implementation pressure:
 
-- claims should be explicit at the request boundary
+- claims should be explicit at the BFF request boundary
 - claims should be configurable for local development and future environments
 - auth failure should remain visible and distinct from validation or duplicate failures
 - login UX should not be invented just to satisfy a header requirement
@@ -25,6 +25,7 @@ That means the next slice should establish:
 - a way to pass claims into the existing `ContactsApiClient`
 - tests that prove all API methods include the expected headers
 - visible handling for `403` failures
+- the BFF config as the source of request-claims values
 
 ## Areas Impacted
 
@@ -40,6 +41,7 @@ Keep the first claims slice narrow:
 - default to static admin claims for local use
 - keep the source overrideable by environment
 - do not introduce login, token persistence, or auth screens
+- keep the BFF responsible for forwarding the claims boundary
 
 ## Follow-Up
 
