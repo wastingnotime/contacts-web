@@ -5,6 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice makes create and edit form submission state explicit while the backend request is in flight.
+The current implementation already shows the submit-in-flight state on create and edit forms.
 
 ## Selected Pack
 

@@ -5,6 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice makes the edit route show a dedicated missing-record state when the contact no longer exists.
+The current implementation already renders a dedicated missing-record state for stale edit routes.
 
 ## Selected Pack
 

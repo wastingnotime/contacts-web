@@ -5,6 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice makes the list-load failure state recoverable with an explicit retry action.
+The current implementation already exposes the retry action from the list error banner.
 
 ## Selected Pack
 

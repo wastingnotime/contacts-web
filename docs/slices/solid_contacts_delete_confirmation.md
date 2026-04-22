@@ -5,6 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice adds an explicit confirmation step before deleting a contact so destructive actions stay deliberate in the Solid browser client.
+The current implementation already requires a delete confirmation step before the backend request is sent.
 
 ## Selected Pack
 

@@ -5,6 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice makes the in-flight delete state explicit after confirmation so the browser shows that the delete request is actually underway.
+The current implementation already shows the pending delete state after confirmation.
 
 ## Selected Pack
 
