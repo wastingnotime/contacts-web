@@ -81,6 +81,17 @@ export function resetContactsMockState() {
 }
 
 export const contactsMockHandlers = [
+  http.post("/api/telemetry", async ({ request }) => {
+    const payload = await request.json();
+    return HttpResponse.json(
+      {
+        accepted: true,
+        telemetry: payload,
+      },
+      { status: 202 },
+    );
+  }),
+
   http.get("/api/contacts", ({ request }) => {
     return HttpResponse.json(state.contacts.map(cloneContact));
   }),

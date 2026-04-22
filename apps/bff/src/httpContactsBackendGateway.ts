@@ -1,20 +1,23 @@
 import {
   mapResponseToApiError,
 } from "../../../src/client/contracts/contactTransport.js";
+import { createTelemetryHeaders } from "../../../src/shared/telemetry/contactsTelemetry.js";
 
 export class HttpContactsBackendGateway {
-  constructor({ baseUrl, authSubject, authRoles, fetchFn }) {
+  constructor({ baseUrl, authSubject, authRoles, fetchFn, telemetryContext }) {
     this.baseUrl = baseUrl;
     this.authSubject = authSubject;
     this.authRoles = authRoles;
     this.fetchFn = fetchFn;
+    this.telemetryContext = telemetryContext;
   }
 
-  requestHeaders(jsonBody = false) {
+  requestHeaders(jsonBody = false, telemetryContext = this.telemetryContext) {
     const headers = {
       Accept: "application/json",
       "x-auth-subject": this.authSubject,
       "x-auth-roles": this.authRoles,
+      ...createTelemetryHeaders(telemetryContext),
     };
 
     if (jsonBody) {
@@ -24,10 +27,10 @@ export class HttpContactsBackendGateway {
     return headers;
   }
 
-  async listContacts() {
+  async listContacts(telemetryContext) {
     const response = await this.fetchFn(`${this.baseUrl}/contacts`, {
       method: "GET",
-      headers: this.requestHeaders(),
+      headers: this.requestHeaders(false, telemetryContext),
     });
 
     if (!response.ok) {
@@ -37,10 +40,10 @@ export class HttpContactsBackendGateway {
     return response.json();
   }
 
-  async createContact(payload) {
+  async createContact(payload, telemetryContext) {
     const response = await this.fetchFn(`${this.baseUrl}/contacts`, {
       method: "POST",
-      headers: this.requestHeaders(true),
+      headers: this.requestHeaders(true, telemetryContext),
       body: JSON.stringify(payload),
     });
 
@@ -60,10 +63,10 @@ export class HttpContactsBackendGateway {
     throw new Error("Unexpected create-contact response.");
   }
 
-  async getContact(contactId) {
+  async getContact(contactId, telemetryContext) {
     const response = await this.fetchFn(`${this.baseUrl}/contacts/${contactId}`, {
       method: "GET",
-      headers: this.requestHeaders(),
+      headers: this.requestHeaders(false, telemetryContext),
     });
 
     if (!response.ok) {
@@ -73,10 +76,10 @@ export class HttpContactsBackendGateway {
     return response.json();
   }
 
-  async updateContact(contactId, payload) {
+  async updateContact(contactId, payload, telemetryContext) {
     const response = await this.fetchFn(`${this.baseUrl}/contacts/${contactId}`, {
       method: "PUT",
-      headers: this.requestHeaders(true),
+      headers: this.requestHeaders(true, telemetryContext),
       body: JSON.stringify(payload),
     });
 
@@ -87,10 +90,10 @@ export class HttpContactsBackendGateway {
     return response.json();
   }
 
-  async deleteContact(contactId) {
+  async deleteContact(contactId, telemetryContext) {
     const response = await this.fetchFn(`${this.baseUrl}/contacts/${contactId}`, {
       method: "DELETE",
-      headers: this.requestHeaders(),
+      headers: this.requestHeaders(false, telemetryContext),
     });
 
     if (response.status === 204) {

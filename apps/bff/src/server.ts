@@ -10,6 +10,10 @@ import {
 } from "./config.ts";
 import { ContactsWebBffClient } from "./contactsWebBff.ts";
 import { HttpContactsBackendGateway } from "./httpContactsBackendGateway.ts";
+import {
+  createTelemetryEvent,
+  readTelemetryContextFromHeaders,
+} from "../../../src/shared/telemetry/contactsTelemetry.js";
 
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, {
@@ -18,7 +22,15 @@ function sendJson(response, statusCode, payload) {
   response.end(JSON.stringify(payload));
 }
 
-function readRequestBody(request) {
+function createErrorResponse(error, fallbackMessage) {
+  const statusCode = getStatusForError(error);
+  return {
+    statusCode,
+    payload: getContactsErrorPayload(error, fallbackMessage),
+  };
+}
+
+async function readRequestBody(request) {
   return new Promise((resolve, reject) => {
     const chunks = [];
 
@@ -40,14 +52,6 @@ function readRequestBody(request) {
   });
 }
 
-function createErrorResponse(error, fallbackMessage) {
-  const statusCode = getStatusForError(error);
-  return {
-    statusCode,
-    payload: getContactsErrorPayload(error, fallbackMessage),
-  };
-}
-
 export function createContactsWebBffServer({
   backendGateway,
   port = getContactsWebBffPort(),
@@ -66,6 +70,7 @@ export function createContactsWebBffServer({
 
   return createServer(async (request, response) => {
     const url = new URL(request.url || "/", "http://localhost");
+    const requestTelemetryContext = readTelemetryContextFromHeaders(request.headers);
 
     if (!url.pathname.startsWith("/api")) {
       sendJson(response, 404, { message: "Not found." });
@@ -80,33 +85,49 @@ export function createContactsWebBffServer({
         return;
       }
 
+      if (request.method === "POST" && apiPath === "/telemetry") {
+        const body = (await readRequestBody(request)) ?? {};
+        sendJson(response, 202, {
+          accepted: true,
+          telemetry: createTelemetryEvent({
+            eventName: body.eventName ?? "browser_event",
+            path: body.path ?? null,
+            method: body.method ?? null,
+            statusCode: body.statusCode ?? null,
+            detail: body.detail ?? body,
+            context: requestTelemetryContext,
+          }),
+        });
+        return;
+      }
+
       if (request.method === "GET" && apiPath === "/contacts") {
-        sendJson(response, 200, await bffClient.listContacts());
+        sendJson(response, 200, await bffClient.listContacts(requestTelemetryContext));
         return;
       }
 
       if (request.method === "POST" && apiPath === "/contacts") {
         const body = await readRequestBody(request);
-        sendJson(response, 201, await bffClient.createContact(body ?? {}));
+        sendJson(response, 201, await bffClient.createContact(body ?? {}, requestTelemetryContext));
         return;
       }
 
       if (request.method === "GET" && apiPath.startsWith("/contacts/")) {
         const contactId = decodeURIComponent(apiPath.slice("/contacts/".length));
-        sendJson(response, 200, await bffClient.getContact(contactId));
+        sendJson(response, 200, await bffClient.getContact(contactId, requestTelemetryContext));
         return;
       }
 
       if (request.method === "PUT" && apiPath.startsWith("/contacts/")) {
         const contactId = decodeURIComponent(apiPath.slice("/contacts/".length));
         const body = await readRequestBody(request);
-        sendJson(response, 200, await bffClient.updateContact(contactId, body ?? {}));
+        sendJson(response, 200, await bffClient.updateContact(contactId, body ?? {}, requestTelemetryContext));
         return;
       }
 
       if (request.method === "DELETE" && apiPath.startsWith("/contacts/")) {
         const contactId = decodeURIComponent(apiPath.slice("/contacts/".length));
-        await bffClient.deleteContact(contactId);
+        await bffClient.deleteContact(contactId, requestTelemetryContext);
         response.writeHead(204);
         response.end();
         return;

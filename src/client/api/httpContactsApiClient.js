@@ -2,16 +2,24 @@ import {
   ContactApiError,
   mapResponseToApiError,
 } from "../contracts/contactTransport";
+import {
+  createContactsTelemetryContext,
+  createTelemetryEvent,
+  createTelemetryHeaders,
+} from "../../shared/telemetry/contactsTelemetry";
 
 export class HttpContactsApiClient {
-  constructor({ baseUrl, fetchFn }) {
+  constructor({ baseUrl, fetchFn, telemetryContext }) {
     this.baseUrl = baseUrl;
     this.fetchFn = fetchFn;
+    this.telemetryContext =
+      telemetryContext ?? createContactsTelemetryContext({ serviceName: "contacts-spa" });
   }
 
   requestHeaders(jsonBody = false) {
     const headers = {
       Accept: "application/json",
+      ...createTelemetryHeaders(this.telemetryContext),
     };
 
     if (jsonBody) {
@@ -19,6 +27,35 @@ export class HttpContactsApiClient {
     }
 
     return headers;
+  }
+
+  async recordTelemetry(eventName, detail = {}) {
+    const body = JSON.stringify(
+      createTelemetryEvent({
+        eventName,
+        detail,
+        path: detail.path,
+        method: detail.method,
+        statusCode: detail.statusCode,
+        context: this.telemetryContext,
+      }),
+    );
+
+    const response = await this.fetchFn(`${this.baseUrl}/telemetry`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        ...createTelemetryHeaders(this.telemetryContext),
+      },
+      body,
+    });
+
+    if (!response.ok && response.status !== 202) {
+      throw new ContactApiError("Unable to record telemetry.", "unknown");
+    }
+
+    return null;
   }
 
   async listContacts() {

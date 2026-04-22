@@ -4,6 +4,7 @@ import { App } from "../App";
 import { createContactsApiClient } from "../api/createContactsApiClient";
 import { getContactsUiMode } from "../config";
 import { ContactsBootstrapFailure } from "./ContactsBootstrapFailure";
+import { createContactsTelemetryContext } from "../../shared/telemetry/contactsTelemetry";
 
 function resolveBootstrapErrorMessage(error) {
   if (error instanceof Error && error.message) {
@@ -42,12 +43,26 @@ export async function bootstrapContactsApp({
 
   const apiClient = createApiClient({
     fetchFn,
+    telemetryContext: createContactsTelemetryContext({
+      serviceName: "contacts-spa",
+      featureName: "contacts-web",
+      appVersion: import.meta.env.VITE_APP_VERSION ?? "dev",
+      environment: import.meta.env.MODE ?? "local",
+    }),
   });
 
   render(
     () => <App apiClient={apiClient} runtimeMode={runtimeMode} />,
     rootElement,
   );
+
+  if (typeof apiClient.recordTelemetry === "function") {
+    void apiClient.recordTelemetry("page_view", {
+      path: window.location.pathname,
+      method: "GET",
+      statusCode: 200,
+    });
+  }
 
   return { status: "ready" };
 }

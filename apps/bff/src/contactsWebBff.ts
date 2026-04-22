@@ -16,19 +16,19 @@ export class ContactsWebBffClient {
     this.backendGateway = backendGateway;
   }
 
-  async listContacts() {
+  async listContacts(telemetryContext) {
     try {
-      const payload = await this.backendGateway.listContacts();
+      const payload = await this.backendGateway.listContacts(telemetryContext);
       return mapTransportListToViewModels(payload);
     } catch (error) {
       throw normalizeBffError(error, "Unable to load contacts.");
     }
   }
 
-  async createContact(draft) {
+  async createContact(draft, telemetryContext) {
     try {
       const payload = mapDraftToCreatePayload(draft);
-      const responsePayload = await this.backendGateway.createContact(payload);
+      const responsePayload = await this.backendGateway.createContact(payload, telemetryContext);
       if (responsePayload === null) {
         return null;
       }
@@ -39,28 +39,28 @@ export class ContactsWebBffClient {
     }
   }
 
-  async getContact(contactId) {
+  async getContact(contactId, telemetryContext) {
     try {
-      const payload = await this.backendGateway.getContact(contactId);
+      const payload = await this.backendGateway.getContact(contactId, telemetryContext);
       return mapTransportContactToViewModel(payload);
     } catch (error) {
       throw normalizeBffError(error, "Unable to load contact.");
     }
   }
 
-  async updateContact(contactId, draft) {
+  async updateContact(contactId, draft, telemetryContext) {
     try {
       const payload = mapDraftToUpdatePayload(draft);
-      const responsePayload = await this.backendGateway.updateContact(contactId, payload);
+      const responsePayload = await this.backendGateway.updateContact(contactId, payload, telemetryContext);
       return mapTransportContactToViewModel(responsePayload);
     } catch (error) {
       throw normalizeBffError(error, "Unable to update contact.");
     }
   }
 
-  async deleteContact(contactId) {
+  async deleteContact(contactId, telemetryContext) {
     try {
-      return await this.backendGateway.deleteContact(contactId);
+      return await this.backendGateway.deleteContact(contactId, telemetryContext);
     } catch (error) {
       throw normalizeBffError(error, "Unable to delete contact.");
     }
