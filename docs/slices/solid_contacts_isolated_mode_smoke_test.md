@@ -5,6 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice adds a deterministic smoke test for the real isolated-mode transport path so the MSW-backed boot and CRUD behavior are exercised together.
+The current implementation already covers the isolated bootstrap and CRUD path with a transport-backed smoke test.
 
 ## Selected Pack
 

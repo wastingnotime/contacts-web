@@ -5,6 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice replaces the custom backend-free path with an explicit MSW-backed mock transport boundary so isolated mode uses the same HTTP-facing client shape as live mode while remaining deterministic and backend-free.
+The current implementation already serves isolated mode through MSW worker and test-server boundaries, with the worker asset committed for browser registration.
 
 ## Selected Pack
 

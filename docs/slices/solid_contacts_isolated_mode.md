@@ -5,6 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice adds an explicit isolated mode so the contacts UI can be exercised without a live backend during development, edge-state inspection, and deterministic testing.
+The current implementation already exposes that isolated mode through the app bootstrap and MSW-backed transport path.
 
 ## Selected Pack
 

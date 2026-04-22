@@ -5,6 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice makes isolated-mode startup failure visible instead of letting the browser crash when the mock worker cannot register.
+The current implementation already renders a visible isolated-mode startup failure view instead of crashing on worker registration rejection.
 
 ## Selected Pack
 

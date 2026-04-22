@@ -5,6 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice keeps the isolated-mode runtime fixtures and the Storybook preview fixtures aligned through one shared contact seed source.
+The current implementation already derives both surfaces from shared contact seeds.
 
 ## Selected Pack
 

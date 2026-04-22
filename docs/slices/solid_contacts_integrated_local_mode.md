@@ -5,6 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice introduces an integrated local development mode where the Solid frontend runs alongside local backend services and a seeded local database so real service interaction can be inspected without reaching out to the external production backend.
+The current implementation already provides an `integrated-local` runtime mode and local dev wiring for that stack boundary.
 
 ## Selected Pack
 
