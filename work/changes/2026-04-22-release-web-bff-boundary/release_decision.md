@@ -1,44 +1,45 @@
 # Release Decision
 
+## Reviewed Slice
+
+`docs/slices/solid_contacts_web_bff_boundary.md`
+
 ## Decision
 
-Accept the current web BFF build as the intended internal version.
+Accept the current web BFF boundary as the intended internal version for `contacts-web`.
 
 ## Basis
 
-Reviewed inputs:
+- `npm test` passed
+- `npm run build` passed
+- the implemented browser -> BFF -> backend shape matches the slice definition
+- the BFF is present as an actual server process rather than only as an architectural hypothesis
+- the SPA remains JavaScript while the BFF owns the contract translation boundary in TypeScript
 
-- implemented BFF slice and implementation note at `work/changes/2026-04-22-build-web-bff-boundary/implementation.md`
-- passing test and build runs
-- lightweight EGD report at `work/changes/2026-04-22-build-web-bff-boundary/egd.md`
-- current slice definition at `docs/slices/solid_contacts_web_bff_boundary.md`
+## Evidence Reviewed
 
-## Summary
+- `work/changes/2026-04-22-build-web-bff-boundary/implementation.md`
+- `work/changes/2026-04-22-build-web-bff-boundary/egd.md`
+- `tests/bff/contactsWebBffServer.test.ts`
+- `tests/bff/contactsWebBff.test.ts`
+- `tests/bff/httpContactsBackendGateway.test.ts`
+- `tests/client/app.test.jsx`
+- `tests/client/isolatedMode.test.jsx`
 
-The build is coherent with the current model:
+## Accepted Shape
 
-- the browser talks to the BFF endpoint rather than directly to the backend
-- the BFF server process exists and serves the CRUD boundary
-- the TypeScript BFF owns request shaping and backend adaptation
-- list, create, edit, and delete flows remain coherent through the BFF server path
-- isolated-mode and browser-facing mock transport remain separate from the live BFF contract
+- SPA requests route through `/api`
+- the BFF owns browser-facing request aggregation and backend translation
+- CRUD flows remain coherent through the BFF boundary
+- claims handling remains explicit and config-backed until real auth/session material exists
 
-## Non-Blocking Review Notes
+## Follow-Up Pressure
 
-The EGD surfaced follow-up pressure, but not release blockers:
+- the current claims boundary is explicit but still config-backed rather than session-derived
+- direct server-path evidence is strongest for the overall CRUD boundary, while auth/session handling remains a future slice
+- isolated-mode transport remains a separate browser inspection surface and should stay documented that way
 
-- auth/session handling is still config-backed rather than a real browser identity flow
-- direct server-path evidence for edit/delete was thinner before the final CRUD server-path test, but the current build now covers that path
-- isolated-mode mocks remain intentionally separate from the real BFF contract
+## Conclusion
 
-These are acceptable for release because they do not contradict the current slice or block the core contacts workflows.
-
-## Regression View
-
-No blocking regression evidence was found.
-
-## Follow-Up Candidates
-
-If the model needs more refinement later, the strongest next candidate is auth/session handling once real auth material exists.
-
-That work should enter the loop through `extract` when the auth boundary becomes available.
+The current implementation is acceptable as the repository’s internal released BFF state.
+Future slices can refine claims/session handling and any remaining server-path evidence without reopening the boundary decision itself.
