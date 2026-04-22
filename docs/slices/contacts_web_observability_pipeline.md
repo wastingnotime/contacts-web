@@ -15,8 +15,8 @@ This slice does not change product behavior. It establishes the telemetry contra
 - Solid browser SPA runtime
 - Node.js plus TypeScript web BFF runtime
 - external `contacts-v2` API
-- OpenTelemetry Collector ingress and export path
-- Axiom as the telemetry backend
+- controlled browser telemetry ingress through the BFF
+- backend export path that can later feed a collector or observability backend
 
 Early-phase rule:
 
@@ -28,7 +28,7 @@ Early-phase rule:
 ## Architecture Mode
 
 - browser/SPA/TypeScript-BFF/backend split with shared telemetry context
-- collector-based observability pipeline
+- controlled telemetry ingestion through the BFF boundary
 - explicit separation of traces, metrics, and logs
 
 Interpretation:
@@ -45,7 +45,7 @@ Included in this slice:
 - define a telemetry boundary that spans SPA, BFF, and API
 - preserve trace context propagation across the request path
 - define shared telemetry metadata such as service name, environment, version, feature, and journey
-- establish a collector-oriented path for browser telemetry instead of sending it directly to the observability backend
+- establish a controlled browser telemetry ingress path through the BFF instead of sending it directly to the observability backend
 - keep traces, metrics, and logs distinct in the model
 
 Contract map for this slice:
@@ -120,7 +120,7 @@ Failure conditions:
 ## Main Business Rules
 
 - telemetry should be end to end across SPA, BFF, and API
-- browser telemetry should pass through a controlled ingress or collector path
+- browser telemetry should pass through a controlled ingress path
 - traces, metrics, and logs should stay distinct
 - shared metadata should make the three runtime layers joinable in analysis
 - observability should help explain user journeys and delivery bottlenecks without changing business behavior
@@ -128,7 +128,7 @@ Failure conditions:
 ## Required Ports
 
 - telemetry context propagation across runtime boundaries
-- browser telemetry ingestion endpoint or collector gateway
+- browser telemetry ingestion endpoint
 - BFF telemetry export path
 - API telemetry export path
 - shared telemetry metadata contract
@@ -170,5 +170,5 @@ Scenario steps:
 - the repository has an explicit observability boundary in slice form
 - the slice distinguishes traces, metrics, and logs
 - the slice names the SPA, BFF, and API as one correlated telemetry system
-- the slice makes the collector-based browser telemetry path explicit
+- the slice makes the controlled browser telemetry ingress path explicit
 - the slice stays separate from product behavior, auth/session implementation, and backend domain redesign

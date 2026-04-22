@@ -29,7 +29,7 @@ The backend needs to preserve its own business and resource telemetry without ab
 
 ### Telemetry Pipeline
 
-The repository needs an explicit collector-oriented path for browser telemetry, plus export paths from the BFF and API.
+The repository needs an explicit browser telemetry ingress path through the BFF, plus export paths from the BFF and API.
 
 ## Tensions To Keep Explicit
 
