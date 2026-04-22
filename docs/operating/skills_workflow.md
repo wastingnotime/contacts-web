@@ -206,6 +206,11 @@ Notes:
 - `implementation.md`
 - test results
 
+**Closure rule**
+
+- when the change is complete and validated, create a conventional git commit before handing it off
+- do not treat a finished change as done while it is still only in the worktree
+
 **Must not**
 
 - invent missing business rules

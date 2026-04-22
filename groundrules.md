@@ -220,7 +220,13 @@ Do not overuse integration tests for logic that belongs in simpler domain tests.
 
 Tests should not depend on real network access, current wall-clock time, or nondeterministic ordering unless such behavior is under deliberate test.
 
-### 22. Avoid bloated fixtures
+### 22. Commit completed changes before closing the task
+
+When a change has been implemented and validated, create a conventional git commit before treating the task as complete.
+
+Do not leave a completed slice, doc update, or validation pass only in the worktree unless the user explicitly asks for a different publishing path.
+
+### 23. Avoid bloated fixtures
 
 Test setup should remain readable.
 
@@ -428,4 +434,3 @@ The default posture for this project is:
 - explicit code over clever code
 
 When unsure, optimize for clarity and model quality, not for production mimicry.
-
