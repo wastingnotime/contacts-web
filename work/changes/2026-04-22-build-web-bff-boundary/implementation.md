@@ -13,6 +13,7 @@
 - Kept `src/client/api/httpContactsApiClient.js` as the browser-facing HTTP client under the BFF boundary
 - Added TypeScript-specific BFF tests in `tests/bff/contactsWebBff.test.ts` and `tests/bff/contactsWebBffServer.test.ts`
 - Extended the direct BFF server-path test to cover list, create, get, update, and delete through the actual server process
+- Added a dedicated BFF server-path test for edit and delete so the CRUD runtime evidence is explicit
 - Updated contract tests so the browser client now targets the BFF contract while the backend gateway stays transport-focused
 - Added `typescript` and `tsx` as dev dependencies so the repository explicitly supports the TS BFF runtime
 

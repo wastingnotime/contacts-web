@@ -51,10 +51,9 @@ The dev workflow should make it obvious when the browser is using the BFF rather
 
 ## Follow-Up Pressure From EGD
 
-The build validated the boundary, but the review surfaced two refinement pressures for the next slice:
+The build validated the boundary, and the review surfaced one remaining refinement pressure for the next slice:
 
 - claim injection is still config-backed in the BFF, so any future session work should be modeled explicitly instead of implied by architecture text
-- direct edit/delete server-path evidence is still thinner than the rest of the CRUD boundary, so the next slice should strengthen runtime proof if that evidence matters
 
 ## Non-Goals
 
