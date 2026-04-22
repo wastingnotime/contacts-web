@@ -21,6 +21,7 @@ The repository needs to keep these concerns separate:
 - Storybook view-model fixtures
 - isolated transport fixtures
 - live backend contract data
+- one canonical seed definition for both local surfaces
 
 The shared source should reduce duplication without hiding the distinction between view-model and transport shapes.
 

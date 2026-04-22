@@ -19,6 +19,7 @@ The repository needs to keep three layers distinct:
 - stubbed unit tests for page behavior
 - isolated-mode smoke coverage for the real transport boundary
 - live-mode contract tests
+- the current smoke path as an already-existing deterministic boundary
 
 The smoke test should not replace the unit suite or grow into a generic browser automation layer.
 

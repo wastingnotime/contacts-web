@@ -22,7 +22,7 @@ The repository now needs an explicit distinction between:
 - live mode, which uses the existing contacts API client
 - isolated mode, which uses deterministic mock transport
 
-That distinction should remain obvious in code, tests, and docs.
+That distinction should remain obvious in code, tests, and docs, and the BFF-backed live path should stay separate from isolated mode.
 
 ## Risks
 

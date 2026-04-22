@@ -5,7 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice adds a deterministic smoke test for the real isolated-mode transport path so the MSW-backed boot and CRUD behavior are exercised together.
-The current implementation already covers the isolated bootstrap and CRUD path with a transport-backed smoke test.
+The current implementation already covers the isolated bootstrap and CRUD path with a transport-backed smoke test, so the slice documents the existing deterministic boundary.
 
 ## Selected Pack
 
@@ -25,7 +25,7 @@ Early-phase rule:
 
 ## Architecture Mode
 
-- frontend-first client/server split
+- frontend-first client/server split with an isolated transport boundary
 - explicit HTTP transport adapter
 - end-to-end smoke coverage over the isolated path
 
@@ -49,6 +49,7 @@ Contract map for this slice:
 - isolated mode continues to use the HTTP-facing client shape
 - MSW intercepts the contacts HTTP requests during the smoke test
 - the smoke test should not depend on the stub-only unit test helpers
+- the smoke test should continue to cover the bootstrap plus CRUD path together
 
 Excluded from this slice:
 

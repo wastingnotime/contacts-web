@@ -5,7 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice introduces an integrated local development mode where the Solid frontend runs alongside local backend services and a seeded local database so real service interaction can be inspected without reaching out to the external production backend.
-The current implementation already provides an `integrated-local` runtime mode and local dev wiring for that stack boundary.
+The current implementation already provides an `integrated-local` runtime mode and local dev wiring for the frontend, the BFF, the local backend, and the seeded database boundary.
 
 ## Selected Pack
 
@@ -14,19 +14,19 @@ The current implementation already provides an `integrated-local` runtime mode a
 ## Runtime Targets
 
 - Solid browser client runtime
-- local backend service runtime
+- local BFF and backend service runtime
 - seeded local database runtime
 - local orchestration via Docker Compose or an equivalent local stack command
 
 Early-phase rule:
 
-- `build` should introduce an explicit integrated local mode for real local service interaction
+- `build` should introduce an explicit integrated local mode for real local service interaction across the local stack
 - `build` should not change the external backend contract
 - `build` should not replace isolated mode or Storybook preview use cases
 
 ## Architecture Mode
 
-- frontend-first client/server split
+- frontend-first client/BFF/backend split
 - locally orchestrated multi-service stack
 - real service interaction against seeded local data
 
@@ -41,7 +41,7 @@ Interpretation:
 Included in this slice:
 
 - define an explicit integrated local mode for development and integration testing
-- run the frontend against locally orchestrated backend and database services
+- run the frontend against locally orchestrated BFF, backend, and database services
 - use seeded local data so contract and flow inspection is reproducible
 - keep isolated mode and Storybook available as separate local inspection paths
 
@@ -50,6 +50,7 @@ Contract map for this slice:
 - integrated local mode uses real local services rather than mock transport
 - the local backend should expose the same contacts workflow contract that the frontend expects
 - seeded local data should make local interaction deterministic enough for repeatable debugging
+- the local stack should keep the BFF and backend boundaries visible
 
 Excluded from this slice:
 
@@ -181,7 +182,7 @@ Scenario steps:
 ## Done Criteria
 
 - integrated local mode is explicit
-- the frontend can run against local backend and database services
+- the frontend can run against local BFF, backend, and database services
 - seeded local data makes the local stack reproducible
 - integrated local mode remains separate from isolated mode and external backend authority
 

@@ -5,7 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice keeps the isolated-mode runtime fixtures and the Storybook preview fixtures aligned through one shared contact seed source.
-The current implementation already derives both surfaces from shared contact seeds.
+The current implementation already derives both surfaces from shared contact seeds, and the alignment is part of the existing local inspection toolchain.
 
 ## Selected Pack
 
@@ -25,7 +25,7 @@ Early-phase rule:
 
 ## Architecture Mode
 
-- frontend-first client/server split
+- frontend-first client/server split with shared deterministic fixture derivation
 - deterministic fixture source shared across preview and isolated runtime layers
 - explicit mapping between view-model fixtures and transport fixtures
 
@@ -34,6 +34,7 @@ Interpretation:
 - this repository owns browser behavior, route semantics, and user feedback
 - this repository does not own persistence or backend authorization policy
 - the shared fixture source exists to keep inspection surfaces consistent, not to change product behavior
+- the fixture source should remain reusable by isolated mode and preview tooling
 
 ## Discovery Scope
 
@@ -42,6 +43,7 @@ Included in this slice:
 - introduce a shared contact fixture source for local preview and isolated runtime use
 - derive Storybook view-model fixtures from the same seed contacts used by MSW
 - keep the isolated runtime seed contacts and Storybook seed contacts in sync
+- keep the canonical seed source easy to inspect and reuse
 
 Contract map for this slice:
 

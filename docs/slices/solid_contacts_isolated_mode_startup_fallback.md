@@ -5,7 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice makes isolated-mode startup failure visible instead of letting the browser crash when the mock worker cannot register.
-The current implementation already renders a visible isolated-mode startup failure view instead of crashing on worker registration rejection.
+The current implementation already renders a visible isolated-mode startup failure view instead of crashing on worker registration rejection, so the slice documents the failure boundary explicitly.
 
 ## Selected Pack
 
@@ -25,7 +25,7 @@ Early-phase rule:
 
 ## Architecture Mode
 
-- frontend-first client/server split
+- frontend-first client/server split with explicit isolated bootstrap failure handling
 - explicit bootstrap boundary before the contacts app mounts
 - visible failure state for isolated-mode startup
 
@@ -48,6 +48,7 @@ Contract map for this slice:
 - isolated mode remains explicit
 - startup failure should not silently degrade into live mode
 - the browser should show a visible bootstrap problem instead of crashing with an unhandled rejection
+- the startup failure view should stay local to isolated-mode bootstrap behavior
 
 Excluded from this slice:
 

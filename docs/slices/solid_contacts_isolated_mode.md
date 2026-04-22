@@ -5,7 +5,7 @@
 Define the next executable vertical slice for `contacts-web`.
 
 This slice adds an explicit isolated mode so the contacts UI can be exercised without a live backend during development, edge-state inspection, and deterministic testing.
-The current implementation already exposes that isolated mode through the app bootstrap and MSW-backed transport path.
+The current implementation already exposes that isolated mode through the app bootstrap and MSW-backed transport path, with the mock boundary visible in the browser and test harness.
 
 ## Selected Pack
 
@@ -24,7 +24,7 @@ Early-phase rule:
 
 ## Architecture Mode
 
-- frontend-first client/server split
+- frontend-first client/BFF/backend split with a separate isolated mock path
 - explicit transport adapter between UI state and backend payloads
 - selectable runtime mode: live backend or isolated mock transport
 
@@ -48,6 +48,7 @@ Contract map for this slice:
 - isolated mode uses mock transport and does not call the live contacts backend
 - live mode continues to use the existing contacts API client
 - the mode boundary stays explicit so test and development paths do not drift together
+- the isolated transport path remains separate from the BFF-backed live flow
 
 Excluded from this slice:
 

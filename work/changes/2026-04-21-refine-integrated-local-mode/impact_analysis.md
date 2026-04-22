@@ -28,6 +28,7 @@ The new mode should not be treated as a second version of isolated mode, and it 
 - the local stack could become too heavyweight for routine development
 - seeded data could drift away from the expected contacts flows
 - the local mode could accidentally blur into the external backend contract or into isolated mock transport
+- the BFF and backend service boundaries should stay visible in the local mode
 
 ## Next Build Pressure
 
