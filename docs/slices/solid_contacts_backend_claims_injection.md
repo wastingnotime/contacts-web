@@ -7,6 +7,7 @@ Define the next executable vertical slice for `contacts-web`.
 This slice keeps the existing Solid browser client and contract-mapping boundary, but makes backend request claims explicit so the local backend contract can be exercised end to end without introducing login UX.
 The current implementation threads those explicit claims through the contacts API client and backend gateway instead of hiding them in page components.
 The current implementation keeps the claims source config-backed in the BFF so the boundary stays explicit without inventing login UX or pushing claim logic into the browser.
+The implemented boundary already treats claims as a BFF concern on the live browser path.
 
 ## Selected Pack
 
@@ -48,6 +49,7 @@ Included in this slice:
 - reuse the existing `ContactsApiClient` and `ContactTransportMapper`
 - keep list/create/edit/delete workflows unchanged apart from claim plumbing
 - keep the BFF config layer as the single source of request-claims behavior
+- keep the browser-side path free of claim-specific branching
 
 Contract map for this slice:
 

@@ -7,6 +7,7 @@ Define the web delivery boundary for `contacts-web` so the Solid SPA talks to a 
 This slice establishes the web BFF as a separate runtime boundary inside the repository and routes the browser contact delivery path through it, while keeping contact business rules in the external backend.
 
 It refines the browser -> TypeScript BFF -> backend shape for the current contacts experience.
+The current implementation already exposes that shape through an actual BFF server process and browser `/api` routing.
 
 ## Selected Pack
 
@@ -49,6 +50,7 @@ Included in this slice:
 - keep backend contract mapping explicit in the BFF
 - preserve user-visible CRUD behavior while shifting delivery responsibility out of the SPA
 - keep claims handling explicit in the BFF boundary without introducing login UX
+- keep the direct browser-to-backend path out of the implemented contacts flow
 
 Contract map for this slice:
 

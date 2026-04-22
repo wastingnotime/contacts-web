@@ -6,6 +6,7 @@ Define the next executable vertical slice for `contacts-web`.
 
 This slice makes duplicate and missing-record responses explicit in the browser copy instead of leaving them as generic backend messages.
 The current implementation keeps duplicate and missing-record copy local to the shared error helper and the affected workflow pages, with the browser still reaching the contract through the BFF boundary.
+The same copy is reused on the live BFF-backed path and the isolated mock path.
 
 ## Selected Pack
 
@@ -44,6 +45,7 @@ Included in this slice:
 - keep validation, authorization, and pending handling intact
 - preserve the existing request boundaries
 - keep the browser-facing copy distinct from the transport-level failure semantics
+- keep the duplicate and missing-record copy stable across both runtime modes
 
 Contract map for this slice:
 

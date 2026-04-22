@@ -6,6 +6,7 @@ Define the first executable vertical slice for `contacts-web`.
 
 This slice should establish the new frontend direction explicitly while staying narrow enough to build deterministically from an empty repository.
 The current implementation keeps this slice as the base list/create contract-mapping boundary for the Solid browser client, with the browser now calling through the BFF instead of reaching the contacts backend directly.
+The list/create seam now lives inside the BFF-backed browser delivery path rather than in the SPA alone.
 
 ## Selected Pack
 
@@ -48,6 +49,7 @@ Included in this slice:
 - map UI contact fields to backend transport fields explicitly
 - represent loading, success, and failure states for list and create flows
 - keep the BFF as the browser's delivery boundary for contacts requests
+- keep the BFF-backed seam reusable by later edit/delete flows
 
 Contract map for this slice:
 

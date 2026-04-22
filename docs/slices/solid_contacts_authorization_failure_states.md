@@ -6,6 +6,7 @@ Define the next executable vertical slice for `contacts-web`.
 
 This slice makes authorization failures visible and consistent across the Solid browser client without introducing login UX or changing the backend contract boundary.
 The current implementation already treats `403` as a distinct browser-visible state across the BFF-backed contacts workflows.
+The same distinction is preserved on the live BFF-backed path and the isolated mock path.
 
 ## Selected Pack
 
@@ -44,6 +45,7 @@ Included in this slice:
 - add a shared helper for translating backend error categories into browser-facing messages
 - keep request claims and transport naming unchanged
 - keep the BFF request boundary in place while making `403` explicit
+- keep the browser messages stable across both BFF-backed runtime paths
 
 Contract map for this slice:
 
