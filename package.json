@@ -10,6 +10,7 @@
     "dev:integrated-local": "vite --mode integrated-local",
     "build": "vite build",
     "build:integrated-local": "vite build --mode integrated-local",
+    "publish:images": "node scripts/publish-production-images.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest run",
