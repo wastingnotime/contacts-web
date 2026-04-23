@@ -1,0 +1,8 @@
+{
+  "namespace": "contacts-web",
+  "tag": "0.1.0",
+  "spaImageName": "spa",
+  "bffImageName": "bff",
+  "spaImageRef": "contacts-web/spa:0.1.0",
+  "bffImageRef": "contacts-web/bff:0.1.0"
+}

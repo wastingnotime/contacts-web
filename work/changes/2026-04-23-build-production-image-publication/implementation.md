@@ -7,9 +7,12 @@
 ## What Changed
 
 - Added a shared production image publication helper at `src/shared/production/contactsWebImagePublication.js`
+- Added a manifest writer at `src/shared/production/publishContactsWebImagePublication.js`
 - Added a publication script at `scripts/publish-production-images.mjs`
 - Added a production image publication script entry in `package.json`
 - Added deterministic tests for stable and distinct SPA/BFF image references in `tests/contracts/productionImagePublication.test.js`
+- Added a manifest writer test in `tests/contracts/productionImagePublicationWriter.test.js`
+- Checked in the publication manifest at `work/publications/contacts_web_image_publication.json`
 
 ## Notes On Boundary Shape
 
@@ -20,8 +23,8 @@
 
 ## Validation
 
-- `npm test`
-- `npm run build`
-- `npm run publish:images`
+- `npm test` passed
+- `npm run build` passed
+- `npm run publish:images` passed and wrote [work/publications/contacts_web_image_publication.json](/home/henrique/repos/github/wastingnotime/contacts-web/work/publications/contacts_web_image_publication.json)
 
-These commands should confirm the publication contract is repeatable.
+These commands confirm the publication contract is repeatable and emits a concrete manifest artifact.

@@ -1,0 +1,37 @@
+import { mkdtemp, readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+import { describe, expect, it } from "vitest";
+
+import { createContactsWebProductionImagePublication } from "../../src/shared/production/contactsWebImagePublication.js";
+import {
+  DEFAULT_CONTACTS_WEB_PUBLICATION_PATH,
+  resolveContactsWebPublicationPath,
+  writeContactsWebProductionImagePublication,
+} from "../../src/shared/production/publishContactsWebImagePublication.js";
+
+describe("contactsWebProductionImagePublicationWriter", () => {
+  it("writes a stable manifest file for downstream infra consumption", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "contacts-web-publication-"));
+    const publication = createContactsWebProductionImagePublication({
+      namespace: "ghcr.io/wastingnotime/contacts-web",
+      tag: "2026.04.23",
+    });
+
+    const result = await writeContactsWebProductionImagePublication({
+      cwd,
+      publication,
+    });
+
+    expect(DEFAULT_CONTACTS_WEB_PUBLICATION_PATH).toBe(
+      "work/publications/contacts_web_image_publication.json",
+    );
+    expect(resolveContactsWebPublicationPath(undefined)).toBe(
+      "work/publications/contacts_web_image_publication.json",
+    );
+    expect(result.outputPath).toBe("work/publications/contacts_web_image_publication.json");
+    expect(await readFile(result.absolutePath, "utf8")).toBe(result.content);
+    expect(JSON.parse(result.content)).toEqual(publication);
+  });
+});
