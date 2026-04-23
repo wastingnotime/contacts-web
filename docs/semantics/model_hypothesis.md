@@ -22,6 +22,8 @@ Use it during `extract`, `refine`, and `build` to define vocabulary, boundaries,
 - BFF architecture summary inventory: `work/sources/bff_architecture_summary_inventory.md`
 - observability strategy from `/home/henrique/Downloads/observability_strategy_spa_bff_api.md` describing end-to-end telemetry across SPA, BFF, and API
 - observability strategy inventory: `work/sources/observability_strategy_spa_bff_api_inventory.md`
+- production architecture note from `/home/henrique/Downloads/architecture-web-production.md` describing the SPA + BFF + backend production delivery shape
+- production architecture inventory: `work/sources/architecture_web_production_inventory.md`
 
 ## Current Hypothesis
 
@@ -68,6 +70,8 @@ The integrated local mode note adds a complementary pressure: the frontend shoul
 
 The observability strategy adds a system-wide pressure on top of the delivery boundary work: the SPA, BFF, and API should participate in one correlated telemetry story. That suggests observability should be treated as an end-to-end concern across the browser, delivery adapter, and backend rather than as three separate stacks of logs and metrics.
 
+The production architecture note adds a packaging pressure: the repository should be able to publish production artifacts for both the SPA and the BFF. In particular, the infra contract expects a Swarm-compatible BFF image that can bind on the production port for Traefik ingress. Production delivery is therefore a containerization boundary as well as a code boundary.
+
 ## Repository Role
 
 - provide the primary web interface for the `contacts` experience domain
@@ -77,6 +81,7 @@ The observability strategy adds a system-wide pressure on top of the delivery bo
 - map the current frontend-friendly contract to the backend's snake_case HTTP shape without leaking transport details into UI state
 - host a web-specific BFF alongside the SPA when delivery concerns need a separate boundary
 - preserve a single correlated observability path across SPA, BFF, and API when telemetry becomes part of the system boundary
+- produce deployable production artifacts for the SPA and BFF so the repo can participate in production delivery
 
 ## Boundary And Relationships
 
@@ -91,6 +96,7 @@ The observability strategy adds a system-wide pressure on top of the delivery bo
 - web-specific BFF response shaping, request aggregation, and auth/session handling
 - end-to-end telemetry context propagation across browser, BFF, and backend interactions
 - collector-based observability pipelines that keep browser telemetry out of direct token-bearing destinations
+- containerized delivery for a static SPA artifact and a Swarm-compatible BFF artifact
 
 ### Out Of Scope
 
@@ -159,6 +165,7 @@ The current model assumes these flows still matter even though the implementatio
 - testability pressure may justify a mock-driven mode that exercises pages and states without depending on the contacts backend
 - the repo may also need a web-specific BFF boundary so SPA code does not absorb transport orchestration directly
 - the observability strategy may require explicit naming and correlation conventions so traces, metrics, and logs can be joined across layers
+- the production architecture note suggests the repository should publish a Swarm-compatible BFF image for Traefik ingress rather than leaving that as an external assumption
 
 ## Likely UI State Model
 
@@ -171,6 +178,7 @@ The current model assumes these flows still matter even though the implementatio
 - integrated-local-mode state that selects a full local service stack for real interaction and integration testing
 - BFF boundary state that decides which concerns belong in the web adapter versus the SPA
 - observability state that decides how telemetry is correlated, sampled, and exported across the browser, BFF, and backend
+- production delivery state that decides how the SPA and BFF are packaged and exposed as container artifacts
 
 ## Unresolved Tensions And Ambiguities
 

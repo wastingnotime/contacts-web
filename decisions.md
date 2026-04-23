@@ -39,6 +39,32 @@ Any additional implementation guidance, migration note, or follow-up.
 
 Add entries as the repository evolves.
 
+## DEC-0008 - Publish A Swarm-Compatible BFF Image For Production Delivery
+
+- Date: 2026-04-23
+- Status: accepted
+- Owners: both
+
+### Context
+The production architecture note says the infra contract is already in place, but `contacts-web` still needs to publish a Swarm-compatible BFF image that binds on the production port for Traefik ingress. The repository already has a container path for the SPA, but production delivery now needs an explicit BFF artifact as well.
+
+### Decision
+Treat production delivery as a two-artifact boundary:
+
+- a static SPA container image for browser assets
+- a Swarm-compatible BFF container image that binds on the production port and serves Traefik ingress
+
+The BFF remains the delivery adapter between the SPA and the backend; the repository should not collapse those concerns into one artifact.
+
+### Consequences
+Production packaging becomes an explicit repo responsibility rather than an implicit infra assumption. The repo now has to preserve relative `/api` paths, keep the BFF deployable as a separate container, and avoid drifting back to a browser-to-backend direct path in production packaging.
+
+### Alternatives considered
+Keep only the static SPA container in this repository and let infra own the BFF packaging. This was rejected because the infra contract explicitly depends on the repo publishing the BFF image.
+
+### Notes
+The current `Dockerfile` only covers the SPA static artifact; a follow-up implementation slice should add the BFF image delivery path when the team is ready to build it.
+
 ## DEC-0007 - Split Licensing Between MRL Artifacts And Contacts-Web Artifacts
 
 - Date: 2026-04-22

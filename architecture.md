@@ -71,6 +71,12 @@ The active repository target is:
 - an explicit HTTP/API contract boundary to the contacts backend
 - tests split between SPA behavior, BFF behavior, and contract mapping
 
+For production artifact delivery, the repository also needs deployable container surfaces:
+
+- a static SPA image for browser assets
+- a Swarm-compatible BFF image that binds on the production port for Traefik ingress
+- the contacts backend remains external to this repository
+
 The repository therefore owns:
 
 - route semantics
@@ -81,6 +87,7 @@ The repository therefore owns:
 - UI-oriented response shaping
 - backend transport mapping
 - user-visible success and failure feedback
+- production delivery artifacts for the SPA and BFF
 
 The repository does not own:
 
@@ -88,6 +95,23 @@ The repository does not own:
 - authoritative contact invariants
 - backend auth implementation
 - backend domain logic
+
+## Production Delivery Shape
+
+The production target shape is a single public domain routed through Traefik:
+
+```text
+Browser -> CloudFront -> Traefik -> SPA static container or BFF -> backend
+```
+
+The repository-facing constraints are:
+
+- the SPA should be publishable as a portable static container image
+- the BFF should be publishable as a Swarm-compatible container image
+- the BFF should bind on the production port expected by Traefik ingress
+- browser code should continue to use relative `/api` paths so dev and prod stay aligned
+
+This is a production packaging boundary, not a backend domain change.
 
 ---
 

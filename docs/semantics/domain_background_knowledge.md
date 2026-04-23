@@ -18,6 +18,7 @@ This repository is the web interface for the `contacts` experience domain. The e
 - concrete user workflow evidence from the frozen legacy `contacts` repository
 - current backend boundary evidence from `contacts-v2`
 - BFF delivery-adapter guidance from the 2026-04-22 architecture summary
+- production delivery guidance from the 2026-04-23 web architecture note
 
 That means evaluation should distinguish carefully between:
 
@@ -40,6 +41,8 @@ The BFF summary adds another implementation-direction signal: if `contacts-web` 
 
 The observability strategy adds a telemetry-direction signal: if `contacts-web` spans SPA, BFF, and API delivery layers, the repository should treat traces, metrics, and logs as one correlated system rather than three isolated streams. The browser should not send telemetry directly to a token-bearing destination; the pipeline should be collector-based and layer-aware.
 
+The production architecture note adds a packaging-direction signal: if `contacts-web` is expected to be production-deployable, the repository should publish a portable static SPA artifact and a Swarm-compatible BFF image that binds on the production port for Traefik ingress. That keeps the production entry path aligned with the browser -> BFF -> backend delivery model instead of collapsing the BFF back into the SPA container.
+
 ## Common Expectations For Contact Web Apps
 
 - users expect a clear list of contacts
@@ -61,6 +64,7 @@ For a browser-facing contacts interface, correctness is not only about backend r
 - transport-model mapping when backend field names differ from UI language
 - deterministic isolated modes that let the UI be inspected without a live backend
 - integrated local modes that run the frontend with local services, seeded data, and real service interaction for contract validation and flow debugging
+- production container artifacts that let the SPA and BFF be deployed as separate runtime surfaces
 
 Even a narrow CRUD frontend needs explicit choices for these behaviors or it will feel broken despite a correct backend.
 
@@ -70,6 +74,7 @@ For a web-specific BFF, the same principle applies at the delivery layer:
 - the BFF should adapt backend responses to UI shape without redefining business rules
 - auth/session handling belongs in the BFF only when it is required for the web channel
 - the BFF should not become shared infrastructure for other channels
+- the BFF should be publishable as a Swarm-compatible container image for production ingress
 
 For observability across SPA, BFF, and API, the same principle applies to telemetry:
 
@@ -78,6 +83,7 @@ For observability across SPA, BFF, and API, the same principle applies to teleme
 - logs should provide context for failures without becoming a high-volume substitute for traces or metrics
 - the browser should emit user-experience signals, the BFF should emit orchestration signals, and the API should emit business and resource signals
 - shared metadata such as service name, environment, version, feature, and journey should be consistent enough to join across layers
+- the production deployment should preserve the same relative `/api` path shape used in development so the browser does not need environment-specific host config
 
 ## Testability Background
 
@@ -146,6 +152,7 @@ The BFF summary suggests that contract-mapping pressure may be more explicit tha
 - mock transport or isolated-mode fixtures for UI-only iteration
 - web BFF route or adapter boundary for browser-specific delivery concerns
 - a telemetry collector or ingress path for browser, BFF, and API observability
+- a containerized SPA artifact and a containerized BFF artifact for production delivery
 
 ## Industry Language Worth Preserving
 
@@ -179,6 +186,7 @@ The BFF summary suggests that contract-mapping pressure may be more explicit tha
 - letting the SPA and BFF merge into one indistinct component tree
 - sending browser telemetry directly to the final observability backend without a controlled collector path
 - treating traces, logs, and metrics as interchangeable signals instead of distinct observability concerns
+- assuming the repository is production-ready without a BFF image that binds for Traefik ingress
 
 ## Specific Gaps Observed In The Reference Baseline
 
