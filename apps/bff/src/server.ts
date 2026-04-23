@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 
 import { getContactsErrorPayload, getStatusForError } from "./serverErrors.ts";
 import {
+  getContactsWebBffHost,
   DEFAULT_CONTACTS_WEB_BFF_PORT,
   getContactsBackendAuthRoles,
   getContactsBackendAuthSubject,
@@ -54,6 +55,7 @@ async function readRequestBody(request) {
 
 export function createContactsWebBffServer({
   backendGateway,
+  host = getContactsWebBffHost(),
   port = getContactsWebBffPort(),
 } = {}) {
   const selectedBackendGateway =
@@ -142,11 +144,12 @@ export function createContactsWebBffServer({
 }
 
 export async function startContactsWebBffServer(options = {}) {
+  const host = options.host ?? getContactsWebBffHost();
   const server = createContactsWebBffServer(options);
   const port = options.port ?? DEFAULT_CONTACTS_WEB_BFF_PORT;
 
   await new Promise((resolve) => {
-    server.listen(port, "127.0.0.1", resolve);
+    server.listen(port, host, resolve);
   });
 
   const address = server.address();

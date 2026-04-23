@@ -63,7 +63,7 @@ Production packaging becomes an explicit repo responsibility rather than an impl
 Keep only the static SPA container in this repository and let infra own the BFF packaging. This was rejected because the infra contract explicitly depends on the repo publishing the BFF image.
 
 ### Notes
-The current `Dockerfile` only covers the SPA static artifact; a follow-up implementation slice should add the BFF image delivery path when the team is ready to build it.
+The root `Dockerfile` remains the SPA static artifact path. The BFF image delivery path now lives in `apps/bff/Dockerfile` and should stay separate from the SPA container.
 
 ## DEC-0007 - Split Licensing Between MRL Artifacts And Contacts-Web Artifacts
 
