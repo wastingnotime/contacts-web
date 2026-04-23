@@ -1,7 +1,7 @@
 {
   "repository": "contacts-web",
-  "spaTag": "2c9d7dc86c488599d89d747588e4976b762f5aee",
-  "bffTag": "bff-2c9d7dc86c488599d89d747588e4976b762f5aee",
-  "spaImageRef": "contacts-web:2c9d7dc86c488599d89d747588e4976b762f5aee",
-  "bffImageRef": "contacts-web:bff-2c9d7dc86c488599d89d747588e4976b762f5aee"
+  "spaTag": "a160ff82c9ad49f7d83e2c7ee802abc347d3414b",
+  "bffTag": "bff-a160ff82c9ad49f7d83e2c7ee802abc347d3414b",
+  "spaImageRef": "contacts-web:a160ff82c9ad49f7d83e2c7ee802abc347d3414b",
+  "bffImageRef": "contacts-web:bff-a160ff82c9ad49f7d83e2c7ee802abc347d3414b"
 }
