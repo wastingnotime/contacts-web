@@ -8,10 +8,13 @@ on:
       - .dockerignore
       - .github/workflows/ci-web-docker.yml
       - Dockerfile
+      - apps/bff/**
       - nginx.conf
       - package-lock.json
       - package.json
+      - scripts/**
       - src/**
+      - work/publications/**
       - tests/**
   workflow_dispatch:
 
@@ -25,11 +28,12 @@ permissions:
 
 env:
   AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
-  IMAGE_NAME: contacts-web
+  SPA_IMAGE_NAME: contacts-web
+  BFF_IMAGE_NAME: contacts-web-bff
   INFRA_REPOSITORY: wastingnotime/infrastructure
 
 jobs:
-  build-and-push:
+  publish-spa-image:
     runs-on: ubuntu-latest
 
     outputs:
@@ -52,7 +56,7 @@ jobs:
 
       - name: set image uri
         id: image
-        run: echo "image_uri=${{ steps.login-ecr.outputs.registry }}/${IMAGE_NAME}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+        run: echo "image_uri=${{ steps.login-ecr.outputs.registry }}/${SPA_IMAGE_NAME}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: set up qemu
         uses: docker/setup-qemu-action@v3
@@ -67,7 +71,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.SPA_IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value=${{ github.sha }}
@@ -83,15 +87,63 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  publish-bff-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+          role-to-assume: ${{ secrets.ECR_ROLE_ARN }}
+          role-session-name: ${{ vars.ECR_ROLE_NAME }}
+
+      - name: login to amazon ecr
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: set up qemu
+        uses: docker/setup-qemu-action@v3
+
+      - name: set up docker buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+          driver: docker-container
+
+      - name: extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.BFF_IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=${{ github.sha }}
+
+      - name: build and push bff image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/bff/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   promote-infrastructure:
-    needs: build-and-push
+    needs: publish-spa-image
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
 
     env:
       GH_TOKEN: ${{ secrets.INFRA_REPO_TOKEN }}
       BRANCH_NAME: promote-contacts-web-${{ github.sha }}
-      IMAGE_URI: ${{ needs.build-and-push.outputs.image_uri }}
+      IMAGE_URI: ${{ needs.publish-spa-image.outputs.image_uri }}
 
     steps:
       - name: checkout infrastructure repo
