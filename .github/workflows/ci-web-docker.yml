@@ -30,7 +30,7 @@ env:
   AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
   SPA_IMAGE_NAME: contacts-web
   BFF_IMAGE_NAME: contacts-web
-  INFRA_REPOSITORY: wastingnotime/infrastructure
+  INFRA_REPOSITORY: wastingnotime/infra-platform
 
 jobs:
   publish-spa-image:
