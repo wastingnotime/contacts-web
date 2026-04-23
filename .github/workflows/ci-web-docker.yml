@@ -29,7 +29,7 @@ permissions:
 env:
   AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
   SPA_IMAGE_NAME: contacts-web
-  BFF_IMAGE_NAME: contacts-web-bff
+  BFF_IMAGE_NAME: contacts-web
   INFRA_REPOSITORY: wastingnotime/infrastructure
 
 jobs:
@@ -120,8 +120,8 @@ jobs:
         with:
           images: ${{ steps.login-ecr.outputs.registry }}/${{ env.BFF_IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=${{ github.sha }}
+            type=raw,value=bff-latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=bff-${{ github.sha }}
 
       - name: build and push bff image
         uses: docker/build-push-action@v6
