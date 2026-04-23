@@ -43,6 +43,8 @@ The observability strategy adds a telemetry-direction signal: if `contacts-web` 
 
 The production architecture note adds a packaging-direction signal: if `contacts-web` is expected to be production-deployable, the repository should publish a portable static SPA artifact and a Swarm-compatible BFF image that binds on the production port for Traefik ingress. That keeps the production entry path aligned with the browser -> BFF -> backend delivery model instead of collapsing the BFF back into the SPA container.
 
+The production handoff pressure adds a publication-direction signal: the repository should expose stable image references for both production artifacts so `../infra-platform` can consume them later, even if that repository is not yet deploying this service. That means artifact publication is part of the operational story, not just the build story.
+
 ## Common Expectations For Contact Web Apps
 
 - users expect a clear list of contacts
@@ -65,6 +67,7 @@ For a browser-facing contacts interface, correctness is not only about backend r
 - deterministic isolated modes that let the UI be inspected without a live backend
 - integrated local modes that run the frontend with local services, seeded data, and real service interaction for contract validation and flow debugging
 - production container artifacts that let the SPA and BFF be deployed as separate runtime surfaces
+- stable image references or digests that can be handed off to a downstream infra repository
 
 Even a narrow CRUD frontend needs explicit choices for these behaviors or it will feel broken despite a correct backend.
 
@@ -187,6 +190,7 @@ The BFF summary suggests that contract-mapping pressure may be more explicit tha
 - sending browser telemetry directly to the final observability backend without a controlled collector path
 - treating traces, logs, and metrics as interchangeable signals instead of distinct observability concerns
 - assuming the repository is production-ready without a BFF image that binds for Traefik ingress
+- assuming the repository is handoff-ready without defining how downstream infra should reference the SPA and BFF images
 
 ## Specific Gaps Observed In The Reference Baseline
 

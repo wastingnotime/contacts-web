@@ -72,6 +72,8 @@ The observability strategy adds a system-wide pressure on top of the delivery bo
 
 The production architecture note adds a packaging pressure: the repository should be able to publish production artifacts for both the SPA and the BFF. In particular, the infra contract expects a Swarm-compatible BFF image that can bind on the production port for Traefik ingress. Production delivery is therefore a containerization boundary as well as a code boundary.
 
+The production handoff pressure adds a publication requirement on top of the container boundary: the repository should publish stable image references for the SPA and BFF so `../infra-platform` can consume them later, even before that repository actually deploys this service. Publication mechanics therefore become part of the model, not just image buildability.
+
 ## Repository Role
 
 - provide the primary web interface for the `contacts` experience domain
@@ -82,6 +84,7 @@ The production architecture note adds a packaging pressure: the repository shoul
 - host a web-specific BFF alongside the SPA when delivery concerns need a separate boundary
 - preserve a single correlated observability path across SPA, BFF, and API when telemetry becomes part of the system boundary
 - produce deployable production artifacts for the SPA and BFF so the repo can participate in production delivery
+- publish stable SPA and BFF image references that an infra repository can consume later
 
 ## Boundary And Relationships
 
@@ -179,6 +182,7 @@ The current model assumes these flows still matter even though the implementatio
 - BFF boundary state that decides which concerns belong in the web adapter versus the SPA
 - observability state that decides how telemetry is correlated, sampled, and exported across the browser, BFF, and backend
 - production delivery state that decides how the SPA and BFF are packaged and exposed as container artifacts
+- publication handoff state that decides how stable image references are exported for `../infra-platform`
 
 ## Unresolved Tensions And Ambiguities
 
@@ -198,3 +202,4 @@ The current model assumes these flows still matter even though the implementatio
 - The BFF summary introduces a SPA-versus-BFF boundary, but the current repository documents do not yet define which delivery concerns stay in the SPA and which move into the web adapter.
 - The observability strategy introduces a telemetry boundary that is broader than request logging and needs to be reconciled with the SPA/BFF/API split.
 - The repository does not yet define how traces, metrics, and logs should be named and correlated across the three runtime layers.
+- The repository does not yet define the exact publication contract for SPA and BFF image references that `../infra-platform` should consume.
