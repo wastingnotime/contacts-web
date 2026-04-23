@@ -2,21 +2,21 @@
 
 ## Requested Change
 
-Refine the production image publication slice so it explicitly models the emitted publication manifest.
+Refine the production image publication slice so it explicitly names the checked-in manifest artifact.
 
 ## Why This Exists
 
-The build now emits a JSON manifest with stable SPA and BFF image references.
-The slice should capture that concrete artifact so downstream infra does not have to infer the handoff format from the script name alone.
+The build now writes `work/publications/contacts_web_image_publication.json` as the durable handoff artifact.
+The slice should name that file directly so the infra handoff is obvious to future readers.
 
 ## Scope
 
-- make the publication manifest explicit in the slice
 - keep the SPA and BFF image references distinct
+- keep the checked-in publication manifest explicit
 - preserve the BFF production-port expectation
 - keep `../infra-platform` as the downstream consumer, not the deployment owner
 
 ## Expected Output
 
 - refined production image publication slice
-- updated semantic context for the publication manifest
+- updated impact analysis for the checked-in manifest artifact
