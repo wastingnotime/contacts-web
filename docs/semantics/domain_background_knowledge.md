@@ -45,6 +45,8 @@ The production architecture note adds a packaging-direction signal: if `contacts
 
 The production handoff pressure adds a publication-direction signal: the repository should expose stable image references for both production artifacts so `../infra-platform` can consume them later, even if that repository is not yet deploying this service. That means artifact publication is part of the operational story, not just the build story.
 
+The built publication manifest sharpens that signal: a production repository can expose a machine-readable image publication record as a handoff artifact, letting a downstream infra repository consume image coordinates without reconstructing the build outcome from conversational memory.
+
 ## Common Expectations For Contact Web Apps
 
 - users expect a clear list of contacts
@@ -68,6 +70,7 @@ For a browser-facing contacts interface, correctness is not only about backend r
 - integrated local modes that run the frontend with local services, seeded data, and real service interaction for contract validation and flow debugging
 - production container artifacts that let the SPA and BFF be deployed as separate runtime surfaces
 - stable image references or digests that can be handed off to a downstream infra repository
+- machine-readable publication manifests that carry those references forward
 
 Even a narrow CRUD frontend needs explicit choices for these behaviors or it will feel broken despite a correct backend.
 
@@ -191,6 +194,7 @@ The BFF summary suggests that contract-mapping pressure may be more explicit tha
 - treating traces, logs, and metrics as interchangeable signals instead of distinct observability concerns
 - assuming the repository is production-ready without a BFF image that binds for Traefik ingress
 - assuming the repository is handoff-ready without defining how downstream infra should reference the SPA and BFF images
+- assuming the publication handoff can stay informal once a manifest artifact already exists
 
 ## Specific Gaps Observed In The Reference Baseline
 

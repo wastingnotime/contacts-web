@@ -74,6 +74,8 @@ The production architecture note adds a packaging pressure: the repository shoul
 
 The production handoff pressure adds a publication requirement on top of the container boundary: the repository should publish stable image references for the SPA and BFF so `../infra-platform` can consume them later, even before that repository actually deploys this service. Publication mechanics therefore become part of the model, not just image buildability.
 
+The built publication script makes that pressure more concrete: the repository now emits a machine-readable publication manifest containing the SPA and BFF image references. That means the model should treat image publication as a first-class artifact rather than a hidden byproduct of the build.
+
 ## Repository Role
 
 - provide the primary web interface for the `contacts` experience domain
@@ -85,6 +87,7 @@ The production handoff pressure adds a publication requirement on top of the con
 - preserve a single correlated observability path across SPA, BFF, and API when telemetry becomes part of the system boundary
 - produce deployable production artifacts for the SPA and BFF so the repo can participate in production delivery
 - publish stable SPA and BFF image references that an infra repository can consume later
+- emit a publication manifest that records the SPA and BFF image references
 
 ## Boundary And Relationships
 
@@ -183,6 +186,7 @@ The current model assumes these flows still matter even though the implementatio
 - observability state that decides how telemetry is correlated, sampled, and exported across the browser, BFF, and backend
 - production delivery state that decides how the SPA and BFF are packaged and exposed as container artifacts
 - publication handoff state that decides how stable image references are exported for `../infra-platform`
+- publication manifest state that decides how the repo records image coordinates for downstream consumers
 
 ## Unresolved Tensions And Ambiguities
 
@@ -203,3 +207,4 @@ The current model assumes these flows still matter even though the implementatio
 - The observability strategy introduces a telemetry boundary that is broader than request logging and needs to be reconciled with the SPA/BFF/API split.
 - The repository does not yet define how traces, metrics, and logs should be named and correlated across the three runtime layers.
 - The repository does not yet define the exact publication contract for SPA and BFF image references that `../infra-platform` should consume.
+- The repository now has a publication manifest script, but it does not yet say whether `../infra-platform` will ingest the JSON directly or whether a later publication step will wrap it.

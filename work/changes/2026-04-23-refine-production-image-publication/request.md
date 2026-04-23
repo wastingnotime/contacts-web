@@ -2,21 +2,21 @@
 
 ## Requested Change
 
-Refine the production delivery boundary into a publication-handoff slice for the SPA and BFF images.
+Refine the production image publication slice so it explicitly models the emitted publication manifest.
 
 ## Why This Exists
 
-`../infra-platform` is the downstream deployment repository, but it does not deploy this service yet.
-`contacts-web` still needs an explicit publication contract so the SPA and BFF image references can be handed off later without rediscovering the build shape.
+The build now emits a JSON manifest with stable SPA and BFF image references.
+The slice should capture that concrete artifact so downstream infra does not have to infer the handoff format from the script name alone.
 
 ## Scope
 
-- define stable image references for the SPA and BFF
-- keep the BFF image requirement explicit
-- make the downstream infra handoff explicit
-- avoid designing the infra deployment mechanics themselves
+- make the publication manifest explicit in the slice
+- keep the SPA and BFF image references distinct
+- preserve the BFF production-port expectation
+- keep `../infra-platform` as the downstream consumer, not the deployment owner
 
 ## Expected Output
 
-- refined publication-handoff slice
-- updated semantic context for image publication
+- refined production image publication slice
+- updated semantic context for the publication manifest

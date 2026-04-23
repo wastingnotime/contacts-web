@@ -2,34 +2,33 @@
 
 ## Scope Of This Refinement
 
-This refinement turns production delivery into an explicit publication handoff:
+This refinement turns publication handoff into a manifest-level artifact:
 
-- the SPA image reference should be stable and reproducible
-- the BFF image reference should be stable and reproducible
-- the BFF remains a required artifact because the infra repo does not yet deploy this service
-- `../infra-platform` should be able to consume the artifact references later
+- the repo emits a machine-readable publication manifest
+- the manifest contains the stable SPA and BFF image references
+- the BFF image remains required and production-shaped
+- `../infra-platform` remains the downstream consumer, not the deployment owner
 
 ## Affected Areas
 
-- `docs/slices/contacts_web_production_delivery_boundary.md`
-- `decisions.md`
+- `docs/slices/contacts_web_production_image_publication.md`
 - `docs/semantics/model_hypothesis.md`
 - `docs/semantics/domain_background_knowledge.md`
-- release/publish metadata that may be added later
+- `work/changes/2026-04-23-build-production-image-publication/implementation.md`
 
 ## Boundary Changes
 
-- production delivery expands from "buildable images" to "publishable image references"
-- the infra handoff becomes explicit without becoming a deployment implementation
-- the SPA and BFF remain separate production artifacts
+- publication handoff is now a first-class repository artifact
+- the manifest is the explicit shape of the handoff
+- deployment wiring remains out of scope
 
 ## Risks If The Slice Drifts
 
-- the repo could treat image publication as implied and never record the actual references
-- the BFF image could disappear from the handoff story even though it is still required
-- downstream infra could end up depending on conversational memory instead of versioned artifact references
+- the repo could regress to implying publication without recording the manifest
+- downstream infra could lose the stable image coordinates if the manifest format is not documented
+- the BFF image could become ambiguous again if the manifest stops naming it explicitly
 
 ## Follow-Up Pressure
 
-- later build work may need a concrete publication mechanism, but this slice should stay at the handoff-contract level
-- if infra later requires a specific registry or tag schema, that should be recorded as a new slice or decision rather than widened here
+- if infra later needs a different registry or schema, that should be recorded as a new publication slice rather than widening this one
+- if the manifest format needs to be versioned, that is a distinct publication concern
