@@ -15,8 +15,9 @@ describe("contactsWebProductionImagePublicationWriter", () => {
   it("writes a stable manifest file for downstream infra consumption", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "contacts-web-publication-"));
     const publication = createContactsWebProductionImagePublication({
-      namespace: "ghcr.io/wastingnotime/contacts-web",
-      tag: "2026.04.23",
+      repository: "590183855481.dkr.ecr.us-east-1.amazonaws.com/contacts-web",
+      spaTag: "ffddb17d43a8e74544529ca619d606a0e68c4799",
+      bffTag: "bff-latest",
     });
 
     const result = await writeContactsWebProductionImagePublication({
