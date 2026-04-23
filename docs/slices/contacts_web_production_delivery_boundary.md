@@ -5,6 +5,7 @@
 Define the production delivery boundary for `contacts-web` so the repository can publish deployable artifacts for both the Solid SPA and the web BFF.
 
 This slice does not implement deployment mechanics. It makes the production packaging requirement explicit so the repository can prove it is ready to deliver a Swarm-compatible BFF image alongside the existing static SPA artifact, even before `../infra-platform` wires this service into a deployment stack.
+The current publication shape is paired with a manifest handoff in `work/publications/contacts_web_image_publication.json`.
 
 ## Selected Pack
 
@@ -17,12 +18,14 @@ This slice does not implement deployment mechanics. It makes the production pack
 - external `contacts-v2` API runtime
 - portable static SPA container image
 - Swarm-compatible BFF container image that binds on the production port for Traefik ingress
+- checked-in publication manifest for downstream image handoff
 
 Early-phase rule:
 
 - `build` should produce or validate deployable production artifacts for the SPA and BFF
 - `build` should keep the BFF as the delivery adapter between the SPA and backend
 - `build` should preserve relative `/api` paths so development and production routing remain aligned
+- `build` should keep the production image publication manifest explicit
 - `build` should not redesign backend domain behavior, auth policy, or observability plumbing
 
 ## Architecture Mode
@@ -30,6 +33,7 @@ Early-phase rule:
 - browser/SPA/TypeScript-BFF/backend split with explicit production packaging
 - production ingress through Traefik
 - separate static browser asset container and BFF container
+- manifest-backed production image publication handoff
 
 Interpretation:
 
@@ -37,6 +41,7 @@ Interpretation:
 - the BFF remains the runtime adapter that fronts the backend contract
 - production delivery is a packaging concern layered on top of the existing browser/BFF/backend split
 - the repository should not collapse the BFF back into the SPA container just to simplify publishing
+- the repository should hand off the production images through the checked-in publication manifest
 
 ## Discovery Scope
 
@@ -45,6 +50,7 @@ Included in this slice:
 - define the production artifact boundary for the SPA and BFF
 - preserve the static SPA container as a production deliverable
 - require a Swarm-compatible BFF container that can bind on the production port
+- preserve the checked-in publication manifest as the handoff artifact for downstream infra
 - keep relative `/api` paths valid in production
 - make the repo responsibility explicit in relation to the infra handoff to `../infra-platform`
 - preserve the fact that `../infra-platform` does not yet deploy this service
@@ -68,6 +74,7 @@ Production adds a new pressure:
 - infra expects a Swarm-compatible BFF image that can sit behind Traefik
 - the production packaging shape should stay aligned with the browser -> BFF -> backend split
 - the repository still needs the BFF image even though the deployment repo does not yet wire this service into a live stack
+- the repository should keep the manifest handoff explicit so infra does not need to infer image coordinates from conversation
 
 Starting with deployment automation would be too implementation-specific.
 Starting without a bounded production-delivery slice would leave the repo's publishing obligations implicit.
@@ -137,6 +144,7 @@ Failure conditions:
 
 - static SPA production image
 - Swarm-compatible BFF production image
+- checked-in publication manifest
 - production port binding for the BFF
 - relative `/api` browser routing
 - repository decision record for production artifact delivery
@@ -149,6 +157,7 @@ The production delivery boundary should make it clear that:
 - the BFF can be deployed as a containerized ingress target
 - infra can route to the BFF using the expected production port
 - local development routing remains structurally similar to production routing
+- downstream infra can consume the checked-in manifest as the image handoff artifact
 
 ## Initial Test Plan
 
@@ -159,6 +168,7 @@ Production delivery tests should specify:
 - the BFF image exposes the production port expected by Traefik ingress
 - the browser continues to use relative `/api` paths
 - production packaging does not collapse the BFF back into the SPA container
+- the checked-in publication manifest matches the published image references
 
 ## Scenario Definition
 
@@ -171,8 +181,9 @@ Scenario steps:
 1. inspect the repository production packaging shape
 2. verify the SPA is delivered as a static container artifact
 3. verify the BFF is delivered as a separate Swarm-compatible container artifact
-4. verify the BFF binds on the production port expected by Traefik
-5. verify browser routing remains relative to `/api`
+4. verify the checked-in publication manifest exists and matches the built image references
+5. verify the BFF binds on the production port expected by Traefik
+6. verify browser routing remains relative to `/api`
 
 ## Done Criteria
 
@@ -181,4 +192,5 @@ Scenario steps:
 - the slice makes the Swarm-compatible BFF image requirement explicit
 - the slice preserves the relative `/api` browser routing assumption
 - the slice keeps the infra handoff explicit without pretending `../infra-platform` deploys this service already
+- the slice keeps the checked-in publication manifest explicit as the image handoff
 - the slice stays separate from deployment automation and backend domain redesign
