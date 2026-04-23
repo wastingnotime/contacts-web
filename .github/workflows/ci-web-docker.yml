@@ -120,7 +120,6 @@ jobs:
         with:
           images: ${{ steps.login-ecr.outputs.registry }}/${{ env.BFF_IMAGE_NAME }}
           tags: |
-            type=raw,value=bff-latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value=bff-${{ github.sha }}
 
       - name: build and push bff image
@@ -164,8 +163,12 @@ jobs:
         working-directory: infrastructure
         run: |
           git switch -c "$BRANCH_NAME"
+          BFF_IMAGE_URI="${IMAGE_URI%%:*}:bff-${GITHUB_SHA}"
 
           env IMAGE_URI="$IMAGE_URI" perl -0pi -e 's@(?m)^    image: .*$@    image: $ENV{IMAGE_URI}@' \
+            terraform/environments/production/swarm/stacks/contacts-web.yml
+
+          env BFF_IMAGE_URI="$BFF_IMAGE_URI" perl -0pi -e 's@(?m)^    image: .*contacts-web:bff-.*$@    image: $ENV{BFF_IMAGE_URI}@' \
             terraform/environments/production/swarm/stacks/contacts-web.yml
 
           perl -0pi -e 's@  contacts-web\.yml\)\n    require_var "CONTACTS_WEB_IMAGE"\n    ;;\n@  contacts-web.yml)\n    ;;\n@' \
