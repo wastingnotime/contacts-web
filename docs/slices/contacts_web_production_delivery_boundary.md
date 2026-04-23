@@ -4,7 +4,7 @@
 
 Define the production delivery boundary for `contacts-web` so the repository can publish deployable artifacts for both the Solid SPA and the web BFF.
 
-This slice does not implement deployment mechanics. It makes the production packaging requirement explicit so the repository can prove it is ready to deliver a Swarm-compatible BFF image alongside the existing static SPA artifact.
+This slice does not implement deployment mechanics. It makes the production packaging requirement explicit so the repository can prove it is ready to deliver a Swarm-compatible BFF image alongside the existing static SPA artifact, even before `../infra-platform` wires this service into a deployment stack.
 
 ## Selected Pack
 
@@ -46,7 +46,8 @@ Included in this slice:
 - preserve the static SPA container as a production deliverable
 - require a Swarm-compatible BFF container that can bind on the production port
 - keep relative `/api` paths valid in production
-- make the repo responsibility explicit in relation to the infra contract
+- make the repo responsibility explicit in relation to the infra handoff to `../infra-platform`
+- preserve the fact that `../infra-platform` does not yet deploy this service
 
 Excluded from this slice:
 
@@ -59,12 +60,14 @@ Excluded from this slice:
 ## Why This Slice Next
 
 The repository already has a live BFF boundary and a static SPA artifact path.
+The production delivery note also needs to make the infra handoff explicit: `../infra-platform` is the downstream consumer of the image artifacts, but it does not yet deploy this service.
 
 Production adds a new pressure:
 
 - the repo must prove it can publish the BFF as an artifact, not just run it locally
 - infra expects a Swarm-compatible BFF image that can sit behind Traefik
 - the production packaging shape should stay aligned with the browser -> BFF -> backend split
+- the repository still needs the BFF image even though the deployment repo does not yet wire this service into a live stack
 
 Starting with deployment automation would be too implementation-specific.
 Starting without a bounded production-delivery slice would leave the repo's publishing obligations implicit.
@@ -177,4 +180,5 @@ Scenario steps:
 - the slice distinguishes the SPA artifact from the BFF artifact
 - the slice makes the Swarm-compatible BFF image requirement explicit
 - the slice preserves the relative `/api` browser routing assumption
+- the slice keeps the infra handoff explicit without pretending `../infra-platform` deploys this service already
 - the slice stays separate from deployment automation and backend domain redesign
