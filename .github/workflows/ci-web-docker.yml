@@ -90,6 +90,9 @@ jobs:
   publish-bff-image:
     runs-on: ubuntu-latest
 
+    outputs:
+      image_uri: ${{ steps.image.outputs.image_uri }}
+
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -104,6 +107,10 @@ jobs:
       - name: login to amazon ecr
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
+
+      - name: set image uri
+        id: image
+        run: echo "image_uri=${{ steps.login-ecr.outputs.registry }}/${BFF_IMAGE_NAME}:bff-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: set up qemu
         uses: docker/setup-qemu-action@v3
@@ -135,14 +142,17 @@ jobs:
           cache-to: type=gha,mode=max
 
   promote-infrastructure:
-    needs: publish-spa-image
+    needs:
+      - publish-spa-image
+      - publish-bff-image
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
 
     env:
       GH_TOKEN: ${{ secrets.INFRA_REPO_TOKEN }}
       BRANCH_NAME: promote-contacts-web-${{ github.sha }}
-      IMAGE_URI: ${{ needs.publish-spa-image.outputs.image_uri }}
+      SPA_IMAGE_URI: ${{ needs.publish-spa-image.outputs.image_uri }}
+      BFF_IMAGE_URI: ${{ needs.publish-bff-image.outputs.image_uri }}
 
     steps:
       - name: checkout infrastructure repo
@@ -163,33 +173,28 @@ jobs:
         working-directory: infrastructure
         run: |
           git switch -c "$BRANCH_NAME"
-          BFF_IMAGE_URI="${IMAGE_URI%%:*}:bff-${GITHUB_SHA}"
 
-          env IMAGE_URI="$IMAGE_URI" perl -0pi -e 's@(?m)^    image: .*$@    image: $ENV{IMAGE_URI}@' \
+          env IMAGE_URI="$SPA_IMAGE_URI" perl -0pi -e 's@(?m)(contacts-web:\n\s+image: ).*$@$1$ENV{IMAGE_URI}@' \
             terraform/environments/production/swarm/stacks/contacts-web.yml
 
-          env BFF_IMAGE_URI="$BFF_IMAGE_URI" perl -0pi -e 's@(?m)^    image: .*contacts-web:bff-.*$@    image: $ENV{BFF_IMAGE_URI}@' \
+          env IMAGE_URI="$BFF_IMAGE_URI" perl -0pi -e 's@(?m)(contacts-web-bff:\n\s+image: ).*$@$1$ENV{IMAGE_URI}@' \
             terraform/environments/production/swarm/stacks/contacts-web.yml
-
-          perl -0pi -e 's@  contacts-web\.yml\)\n    require_var "CONTACTS_WEB_IMAGE"\n    ;;\n@  contacts-web.yml)\n    ;;\n@' \
-            terraform/environments/production/swarm/scripts/deploy-stack.sh
 
           git add terraform/environments/production/swarm/stacks/contacts-web.yml
-          git add terraform/environments/production/swarm/scripts/deploy-stack.sh
-          git commit -m "chore: promote contacts-web image"
+          git commit -m "chore: promote contacts-web images"
           git push -u origin "$BRANCH_NAME"
 
       - name: open infrastructure pull request
         working-directory: infrastructure
         run: |
           printf '%s\n\n%s\n' \
-            "Promote contacts-web image ${IMAGE_URI} into the production swarm stack." \
-            "This updates the stack file to use the built ECR image directly and removes the obsolete CONTACTS_WEB_IMAGE stack input for contacts-web deployments." \
+            "Promote contacts-web images ${SPA_IMAGE_URI} and ${BFF_IMAGE_URI} into the production swarm stack." \
+            "This updates the stack file to use the built ECR images directly for both the static SPA and the BFF runtime." \
             > /tmp/contacts-web-pr-body.md
 
           gh pr create \
             --repo "$INFRA_REPOSITORY" \
             --base main \
             --head "$BRANCH_NAME" \
-            --title "chore: promote contacts-web image ${GITHUB_SHA}" \
+            --title "chore: promote contacts-web images ${GITHUB_SHA}" \
             --body-file /tmp/contacts-web-pr-body.md

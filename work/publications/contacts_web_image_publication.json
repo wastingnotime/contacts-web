@@ -1,7 +1,7 @@
 {
   "repository": "contacts-web",
-  "spaTag": "0.1.0",
-  "bffTag": "bff-latest",
-  "spaImageRef": "contacts-web:0.1.0",
-  "bffImageRef": "contacts-web:bff-latest"
+  "spaTag": "2c9d7dc86c488599d89d747588e4976b762f5aee",
+  "bffTag": "bff-2c9d7dc86c488599d89d747588e4976b762f5aee",
+  "spaImageRef": "contacts-web:2c9d7dc86c488599d89d747588e4976b762f5aee",
+  "bffImageRef": "contacts-web:bff-2c9d7dc86c488599d89d747588e4976b762f5aee"
 }

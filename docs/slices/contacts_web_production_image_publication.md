@@ -14,8 +14,8 @@ This slice does not implement deployment wiring in `../infra-platform`. It makes
 
 - portable static SPA container image
 - Swarm-compatible BFF container image that binds on the production port for Traefik ingress
-- publication manifest with stable SPA and BFF image references
-- stable image references suitable for downstream consumption
+- publication manifest with immutable SHA-derived SPA and BFF image references
+- same-repository image references suitable for downstream consumption
 - external `contacts-v2` API runtime
 
 Early-phase rule:
@@ -124,7 +124,7 @@ Input:
 Success result:
 
 - a machine-readable publication manifest is emitted
-- the manifest contains the stable SPA and BFF image references
+- the manifest contains the immutable SHA-derived SPA and BFF image references
 - the manifest can be handed to downstream infra without further interpretation
 - the manifest is written to `work/publications/contacts_web_image_publication.json`
 
@@ -155,7 +155,7 @@ Failure conditions:
 
 ## Main Business Rules
 
-- the SPA and BFF should be published as separate image artifacts
+- the SPA and BFF should be published as separate image artifacts in the same `contacts-web` repository
 - the BFF image should remain Swarm-compatible and ingress-ready
 - the browser should keep using relative `/api` paths
 - the publication contract should be explicit enough for downstream infra consumption
@@ -208,7 +208,7 @@ Scenario steps:
 2. inspect the published BFF image reference
 3. inspect the publication manifest that contains both references
 4. inspect the checked-in manifest file at `work/publications/contacts_web_image_publication.json`
-5. confirm the two references are distinct and stable
+5. confirm the two references are distinct and SHA-derived
 6. confirm the BFF reference preserves the production port expectation
 7. confirm the handoff is explicit enough for `../infra-platform`
 

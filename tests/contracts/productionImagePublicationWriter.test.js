@@ -17,7 +17,7 @@ describe("contactsWebProductionImagePublicationWriter", () => {
     const publication = createContactsWebProductionImagePublication({
       repository: "590183855481.dkr.ecr.us-east-1.amazonaws.com/contacts-web",
       spaTag: "ffddb17d43a8e74544529ca619d606a0e68c4799",
-      bffTag: "bff-latest",
+      bffTag: "bff-ffddb17d43a8e74544529ca619d606a0e68c4799",
     });
 
     const result = await writeContactsWebProductionImagePublication({

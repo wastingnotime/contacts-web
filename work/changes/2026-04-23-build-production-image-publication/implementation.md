@@ -16,8 +16,8 @@
 
 ## Notes On Boundary Shape
 
-- The SPA and BFF image references share the same `contacts-web` repository and separate tags
-- The BFF reference preserves the production artifact boundary with the `bff-latest` tag
+- The SPA and BFF image references share the same `contacts-web` repository and use immutable SHA-derived tags
+- The BFF reference preserves the production artifact boundary with the `bff-<sha>` tag
 - The publication script emits a concrete handoff artifact for downstream infra use
 - The infra repository is still separate and still does not deploy this service yet
 
