@@ -1,4 +1,4 @@
-import { http, passthrough } from "msw";
+import { http, HttpResponse, passthrough } from "msw";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { contactsMockServer } from "../../src/client/mock/contactsMockServer";
@@ -17,12 +17,16 @@ function allowPassthroughToActiveServer(baseUrl) {
 
 describe("contactsWebBffServer", () => {
   let activeServer;
+  const originalTelemetryCollectorBaseUrl =
+    process.env.CONTACTS_TELEMETRY_COLLECTOR_BASE_URL;
 
   afterEach(async () => {
     if (activeServer) {
       await new Promise((resolve) => activeServer.server.close(resolve));
       activeServer = null;
     }
+
+    process.env.CONTACTS_TELEMETRY_COLLECTOR_BASE_URL = originalTelemetryCollectorBaseUrl;
   });
 
   it("serves CRUD through the BFF boundary", async () => {
@@ -274,6 +278,123 @@ describe("contactsWebBffServer", () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
       code: "validation",
+    });
+  });
+
+  it("relays browser telemetry to the shared collector boundary", async () => {
+    const telemetryContext = {
+      traceparent: "00-1234567890abcdef1234567890abcdef-1234567890abcdef-01",
+      "x-contacts-trace-id": "1234567890abcdef1234567890abcdef",
+      "x-contacts-service-name": "contacts-spa",
+      "x-contacts-feature-name": "contacts-web",
+      "x-contacts-journey-name": "contacts-web-journey",
+      "x-contacts-app-version": "2026.04.22",
+      "x-contacts-environment": "test",
+    };
+    const collectorBaseUrl = "http://collector.example";
+    const collectorRequests = [];
+
+    process.env.CONTACTS_TELEMETRY_COLLECTOR_BASE_URL = collectorBaseUrl;
+
+    contactsMockServer.use(
+      http.post(`${collectorBaseUrl}/telemetry`, async ({ request }) => {
+        collectorRequests.push({
+          body: await request.json(),
+          headers: Object.fromEntries(request.headers.entries()),
+        });
+
+        return HttpResponse.json(
+          {
+            accepted: true,
+          },
+          { status: 202 },
+        );
+      }),
+    );
+
+    activeServer = await startContactsWebBffServer({
+      backendGateway: {
+        listContacts: async () => [],
+        createContact: async () => null,
+        getContact: async () => ({
+          id: "contact-1",
+          first_name: "Ada",
+          last_name: "Lovelace",
+          phone_number: "5550001",
+        }),
+        updateContact: async () => null,
+        deleteContact: async () => null,
+      },
+      port: 0,
+    });
+
+    allowPassthroughToActiveServer(activeServer.baseUrl);
+
+    const telemetryResponse = await fetch(`${activeServer.baseUrl}/api/telemetry`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...telemetryContext,
+      },
+      body: JSON.stringify({
+        eventName: "page_view",
+        path: "/contacts",
+        method: "GET",
+        statusCode: 200,
+        detail: {
+          route: "/contacts",
+        },
+      }),
+    });
+
+    expect(telemetryResponse.status).toBe(202);
+    expect(await telemetryResponse.json()).toMatchObject({
+      accepted: true,
+      telemetry: {
+        eventName: "page_view",
+        path: "/contacts",
+        method: "GET",
+        statusCode: 200,
+        detail: {
+          route: "/contacts",
+        },
+        serviceName: "contacts-spa",
+        featureName: "contacts-web",
+        journeyName: "contacts-web-journey",
+        appVersion: "2026.04.22",
+        environment: "test",
+        traceparent: telemetryContext.traceparent,
+        traceId: telemetryContext["x-contacts-trace-id"],
+      },
+    });
+
+    expect(collectorRequests).toHaveLength(1);
+    expect(collectorRequests[0].body).toMatchObject({
+      eventName: "page_view",
+      path: "/contacts",
+      method: "GET",
+      statusCode: 200,
+      detail: {
+        route: "/contacts",
+      },
+      serviceName: "contacts-spa",
+      featureName: "contacts-web",
+      journeyName: "contacts-web-journey",
+      appVersion: "2026.04.22",
+      environment: "test",
+      traceparent: telemetryContext.traceparent,
+      traceId: telemetryContext["x-contacts-trace-id"],
+    });
+    expect(collectorRequests[0].headers).toMatchObject({
+      accept: "application/json",
+      "content-type": "application/json",
+      traceparent: telemetryContext.traceparent,
+      "x-contacts-service-name": "contacts-spa",
+      "x-contacts-feature-name": "contacts-web",
+      "x-contacts-journey-name": "contacts-web-journey",
+      "x-contacts-app-version": "2026.04.22",
+      "x-contacts-environment": "test",
+      "x-contacts-trace-id": telemetryContext["x-contacts-trace-id"],
     });
   });
 

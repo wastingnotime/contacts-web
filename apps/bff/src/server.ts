@@ -7,10 +7,12 @@ import {
   getContactsBackendAuthRoles,
   getContactsBackendAuthSubject,
   getContactsBackendBaseUrl,
+  getContactsTelemetryCollectorBaseUrl,
   getContactsWebBffPort,
 } from "./config.ts";
 import { ContactsWebBffClient } from "./contactsWebBff.ts";
 import { HttpContactsBackendGateway } from "./httpContactsBackendGateway.ts";
+import { HttpContactsTelemetryCollector } from "./httpContactsTelemetryCollector.ts";
 import {
   createTelemetryEvent,
   readTelemetryContextFromHeaders,
@@ -55,6 +57,7 @@ async function readRequestBody(request) {
 
 export function createContactsWebBffServer({
   backendGateway,
+  telemetryCollector,
   host = getContactsWebBffHost(),
   port = getContactsWebBffPort(),
 } = {}) {
@@ -64,6 +67,12 @@ export function createContactsWebBffServer({
       baseUrl: getContactsBackendBaseUrl(),
       authSubject: getContactsBackendAuthSubject(),
       authRoles: getContactsBackendAuthRoles(),
+      fetchFn: globalThis.fetch.bind(globalThis),
+    });
+  const selectedTelemetryCollector =
+    telemetryCollector ??
+    new HttpContactsTelemetryCollector({
+      baseUrl: getContactsTelemetryCollectorBaseUrl(),
       fetchFn: globalThis.fetch.bind(globalThis),
     });
   const bffClient = new ContactsWebBffClient({
@@ -89,16 +98,24 @@ export function createContactsWebBffServer({
 
       if (request.method === "POST" && apiPath === "/telemetry") {
         const body = (await readRequestBody(request)) ?? {};
+        const telemetry = createTelemetryEvent({
+          eventName: body.eventName ?? "browser_event",
+          path: body.path ?? null,
+          method: body.method ?? null,
+          statusCode: body.statusCode ?? null,
+          detail: body.detail ?? body,
+          context: requestTelemetryContext,
+        });
+
+        try {
+          await selectedTelemetryCollector.recordTelemetry(telemetry, requestTelemetryContext);
+        } catch {
+          // Telemetry relay is best-effort; browser acceptance should not depend on collector uptime.
+        }
+
         sendJson(response, 202, {
           accepted: true,
-          telemetry: createTelemetryEvent({
-            eventName: body.eventName ?? "browser_event",
-            path: body.path ?? null,
-            method: body.method ?? null,
-            statusCode: body.statusCode ?? null,
-            detail: body.detail ?? body,
-            context: requestTelemetryContext,
-          }),
+          telemetry,
         });
         return;
       }
