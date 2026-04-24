@@ -1,5 +1,5 @@
 import { trace } from "@opentelemetry/api";
-import { Resource } from "@opentelemetry/resources";
+import { resourceFromAttributes } from "@opentelemetry/resources";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { BatchSpanProcessor, NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 
@@ -16,19 +16,18 @@ export function buildObservability({
   }
 
   const tracerProvider = new NodeTracerProvider({
-    resource: Resource.create({
+    resource: resourceFromAttributes({
       "service.name": serviceName,
       "service.version": serviceVersion,
     }),
+    spanProcessors: [
+      new BatchSpanProcessor(
+        new OTLPTraceExporter({
+          url: `${otlpEndpoint.replace(/\/$/, "")}/v1/traces`,
+        }),
+      ),
+    ],
   });
-
-  tracerProvider.addSpanProcessor(
-    new BatchSpanProcessor(
-      new OTLPTraceExporter({
-        url: `${otlpEndpoint.replace(/\/$/, "")}/v1/traces`,
-      }),
-    ),
-  );
   tracerProvider.register();
 
   return {
