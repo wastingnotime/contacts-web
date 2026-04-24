@@ -15,6 +15,58 @@ function allowPassthroughToActiveServer(baseUrl) {
   );
 }
 
+function createTestObservability() {
+  const traceId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  const spanId = "bbbbbbbbbbbbbbbb";
+  const spans = [];
+
+  const tracer = {
+    startSpan(name, options = {}) {
+      const span = {
+        name,
+        options,
+        attributes: {},
+        events: [],
+        exceptions: [],
+        status: null,
+        ended: false,
+        addEvent(eventName, attributes) {
+          this.events.push({ eventName, attributes });
+        },
+        end() {
+          this.ended = true;
+        },
+        recordException(error) {
+          this.exceptions.push(error);
+        },
+        setAttribute(key, value) {
+          this.attributes[key] = value;
+        },
+        setStatus(status) {
+          this.status = status;
+        },
+        spanContext() {
+          return {
+            traceId,
+            spanId,
+            traceFlags: 1,
+          };
+        },
+      };
+
+      spans.push(span);
+      return span;
+    },
+  };
+
+  return {
+    tracer,
+    spans,
+    traceparent: `00-${traceId}-${spanId}-01`,
+    shutdown: async () => {},
+  };
+}
+
 describe("contactsWebBffServer", () => {
   let activeServer;
   const originalTelemetryCollectorBaseUrl =
@@ -65,9 +117,11 @@ describe("contactsWebBffServer", () => {
       })),
       deleteContact: vi.fn(async () => null),
     };
+    const observability = createTestObservability();
 
     activeServer = await startContactsWebBffServer({
       backendGateway,
+      observability,
       port: 0,
     });
 
@@ -190,8 +244,8 @@ describe("contactsWebBffServer", () => {
 
     expect(backendGateway.listContacts).toHaveBeenCalledTimes(1);
     expect(backendGateway.listContacts.mock.calls[0][0]).toMatchObject({
-      traceparent: telemetryContext.traceparent,
-      serviceName: "contacts-spa",
+      traceparent: observability.traceparent,
+      serviceName: "contacts-bff",
       featureName: "contacts-web",
       journeyName: "contacts-web-journey",
       appVersion: "2026.04.22",
@@ -200,8 +254,8 @@ describe("contactsWebBffServer", () => {
     expect(backendGateway.getContact).toHaveBeenCalledWith(
       "contact-1",
       expect.objectContaining({
-        traceparent: telemetryContext.traceparent,
-        serviceName: "contacts-spa",
+        traceparent: observability.traceparent,
+        serviceName: "contacts-bff",
         featureName: "contacts-web",
         journeyName: "contacts-web-journey",
         appVersion: "2026.04.22",
@@ -213,8 +267,8 @@ describe("contactsWebBffServer", () => {
       last_name: "Hopper",
       phone_number: "555-0100",
     }, expect.objectContaining({
-      traceparent: telemetryContext.traceparent,
-      serviceName: "contacts-spa",
+      traceparent: observability.traceparent,
+      serviceName: "contacts-bff",
       featureName: "contacts-web",
       journeyName: "contacts-web-journey",
       appVersion: "2026.04.22",
@@ -227,16 +281,16 @@ describe("contactsWebBffServer", () => {
       last_name: "Byron",
       phone_number: "5550009",
     }, expect.objectContaining({
-      traceparent: telemetryContext.traceparent,
-      serviceName: "contacts-spa",
+      traceparent: observability.traceparent,
+      serviceName: "contacts-bff",
       featureName: "contacts-web",
       journeyName: "contacts-web-journey",
       appVersion: "2026.04.22",
       environment: "test",
     }));
     expect(backendGateway.deleteContact).toHaveBeenCalledWith("contact-1", expect.objectContaining({
-      traceparent: telemetryContext.traceparent,
-      serviceName: "contacts-spa",
+      traceparent: observability.traceparent,
+      serviceName: "contacts-bff",
       featureName: "contacts-web",
       journeyName: "contacts-web-journey",
       appVersion: "2026.04.22",
@@ -257,6 +311,7 @@ describe("contactsWebBffServer", () => {
 
     activeServer = await startContactsWebBffServer({
       backendGateway,
+      observability: createTestObservability(),
       port: 0,
     });
 
@@ -293,6 +348,7 @@ describe("contactsWebBffServer", () => {
     };
     const collectorBaseUrl = "http://collector.example";
     const collectorRequests = [];
+    const observability = createTestObservability();
 
     process.env.CONTACTS_TELEMETRY_COLLECTOR_BASE_URL = collectorBaseUrl;
 
@@ -325,6 +381,7 @@ describe("contactsWebBffServer", () => {
         updateContact: async () => null,
         deleteContact: async () => null,
       },
+      observability,
       port: 0,
     });
 
@@ -396,6 +453,18 @@ describe("contactsWebBffServer", () => {
       "x-contacts-environment": "test",
       "x-contacts-trace-id": telemetryContext["x-contacts-trace-id"],
     });
+    expect(observability.spans).toHaveLength(1);
+    expect(observability.spans[0].events).toEqual([
+      {
+        eventName: "browser.telemetry",
+        attributes: {
+          "browser.event_name": "page_view",
+          "browser.path": "/contacts",
+          "browser.method": "GET",
+          "browser.status_code": 200,
+        },
+      },
+    ]);
   });
 
   it("serves edit and delete through the BFF boundary", async () => {
@@ -424,9 +493,11 @@ describe("contactsWebBffServer", () => {
       })),
       deleteContact: vi.fn(async () => null),
     };
+    const observability = createTestObservability();
 
     activeServer = await startContactsWebBffServer({
       backendGateway,
+      observability,
       port: 0,
     });
 
@@ -479,8 +550,8 @@ describe("contactsWebBffServer", () => {
     expect(backendGateway.getContact).toHaveBeenCalledWith(
       "contact-1",
       expect.objectContaining({
-        traceparent: telemetryContext.traceparent,
-        serviceName: "contacts-spa",
+        traceparent: observability.traceparent,
+        serviceName: "contacts-bff",
         featureName: "contacts-web",
         journeyName: "contacts-web-journey",
         appVersion: "2026.04.22",
@@ -496,8 +567,8 @@ describe("contactsWebBffServer", () => {
         phone_number: "5550009",
       },
       expect.objectContaining({
-        traceparent: telemetryContext.traceparent,
-        serviceName: "contacts-spa",
+        traceparent: observability.traceparent,
+        serviceName: "contacts-bff",
         featureName: "contacts-web",
         journeyName: "contacts-web-journey",
         appVersion: "2026.04.22",
@@ -507,8 +578,8 @@ describe("contactsWebBffServer", () => {
     expect(backendGateway.deleteContact).toHaveBeenCalledWith(
       "contact-1",
       expect.objectContaining({
-        traceparent: telemetryContext.traceparent,
-        serviceName: "contacts-spa",
+        traceparent: observability.traceparent,
+        serviceName: "contacts-bff",
         featureName: "contacts-web",
         journeyName: "contacts-web-journey",
         appVersion: "2026.04.22",

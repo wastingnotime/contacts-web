@@ -1,16 +1,17 @@
-# Implementation: Browser Telemetry Relay Through The BFF
+# Implementation: Browser Telemetry Through The BFF
 
 ## Summary
 
-The browser-facing `/api/telemetry` route in the BFF now acts as a relay instead of a terminal sink.
+The browser-facing `/api/telemetry` route in the BFF now records browser telemetry as a BFF span event while the BFF itself owns the exported request span for downstream propagation.
 
 ## Changes
 
-- added a BFF-side telemetry collector client that forwards browser telemetry to the shared collector boundary
-- made the collector base URL configurable through `CONTACTS_TELEMETRY_COLLECTOR_BASE_URL`
-- kept browser telemetry acceptance at `202` so telemetry remains best-effort from the browser's point of view
-- added a BFF test that asserts a browser telemetry event reaches the collector endpoint
-- added a test harness handler for the default collector URL to keep the suite quiet when no external collector is running
+- added a BFF-side OTLP trace provider so the BFF request span is exported to the shared collector
+- made the BFF request span the trace root for backend propagation
+- kept the browser telemetry acceptance at `202` so telemetry remains best-effort from the browser's point of view
+- recorded browser telemetry as a span event on the BFF request span
+- kept the best-effort collector relay path in place for the browser telemetry payload
+- updated the BFF tests to assert BFF-owned trace context and span events
 
 ## Validation
 
