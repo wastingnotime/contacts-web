@@ -30,7 +30,6 @@ env:
   AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
   SPA_IMAGE_NAME: contacts-web
   BFF_IMAGE_NAME: contacts-web
-  INFRA_REPOSITORY: wastingnotime/infra-platform
 
 jobs:
   publish-spa-image:
@@ -140,61 +139,3 @@ jobs:
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  promote-infrastructure:
-    needs:
-      - publish-spa-image
-      - publish-bff-image
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-
-    env:
-      GH_TOKEN: ${{ secrets.INFRA_REPO_TOKEN }}
-      BRANCH_NAME: promote-contacts-web-${{ github.sha }}
-      SPA_IMAGE_URI: ${{ needs.publish-spa-image.outputs.image_uri }}
-      BFF_IMAGE_URI: ${{ needs.publish-bff-image.outputs.image_uri }}
-
-    steps:
-      - name: checkout infrastructure repo
-        uses: actions/checkout@v4
-        with:
-          repository: wastingnotime/infrastructure
-          token: ${{ secrets.INFRA_REPO_TOKEN }}
-          path: infrastructure
-          fetch-depth: 0
-
-      - name: configure git identity
-        working-directory: infrastructure
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: update swarm promotion files
-        working-directory: infrastructure
-        run: |
-          git switch -c "$BRANCH_NAME"
-
-          env IMAGE_URI="$SPA_IMAGE_URI" perl -0pi -e 's@(?m)(contacts-web:\n\s+image: ).*$@$1$ENV{IMAGE_URI}@' \
-            terraform/environments/production/swarm/stacks/contacts-web.yml
-
-          env IMAGE_URI="$BFF_IMAGE_URI" perl -0pi -e 's@(?m)(contacts-web-bff:\n\s+image: ).*$@$1$ENV{IMAGE_URI}@' \
-            terraform/environments/production/swarm/stacks/contacts-web.yml
-
-          git add terraform/environments/production/swarm/stacks/contacts-web.yml
-          git commit -m "chore: promote contacts-web images"
-          git push -u origin "$BRANCH_NAME"
-
-      - name: open infrastructure pull request
-        working-directory: infrastructure
-        run: |
-          printf '%s\n\n%s\n' \
-            "Promote contacts-web images ${SPA_IMAGE_URI} and ${BFF_IMAGE_URI} into the production swarm stack." \
-            "This updates the stack file to use the built ECR images directly for both the static SPA and the BFF runtime." \
-            > /tmp/contacts-web-pr-body.md
-
-          gh pr create \
-            --repo "$INFRA_REPOSITORY" \
-            --base main \
-            --head "$BRANCH_NAME" \
-            --title "chore: promote contacts-web images ${GITHUB_SHA}" \
-            --body-file /tmp/contacts-web-pr-body.md

@@ -39,6 +39,27 @@ Any additional implementation guidance, migration note, or follow-up.
 
 Add entries as the repository evolves.
 
+## DEC-0009 - Keep Infra-Platform Promotion Out Of The App Repository Workflow
+
+- Date: 2026-04-28
+- Status: accepted
+- Owners: both
+
+### Context
+The production promotion contract now places image publication in the app repository and infrastructure promotion elsewhere. The app repository previously opened a pull request into `wastingnotime/infra-platform`, which made this repo responsible for a cross-repository promotion action that no longer matches the contract.
+
+### Decision
+Remove the infra-platform pull request step from the app repository workflow. The app repo remains responsible for building and publishing its own artifacts, but it no longer opens or manages promotion pull requests in `wastingnotime/infra-platform`.
+
+### Consequences
+The app repository stops owning cross-repository promotion mechanics. Promotion can now be handled by the repository or automation that owns the infra-platform workflow, without coupling that responsibility to app build and publication jobs.
+
+### Alternatives considered
+Keep the PR creation step but make it optional. This was rejected because the contract now explicitly removes the app repo from infra-platform promotion ownership.
+
+### Notes
+The removed behavior lived in `.github/workflows/ci-web-docker.yml`.
+
 ## DEC-0008 - Publish A Swarm-Compatible BFF Image For Production Delivery
 
 - Date: 2026-04-23
