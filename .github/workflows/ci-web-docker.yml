@@ -139,3 +139,28 @@ jobs:
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  dispatch-integration-sandbox:
+    needs:
+      - publish-spa-image
+      - publish-bff-image
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    env:
+      GH_TOKEN: ${{ secrets.INTEGRATION_SANDBOX_REPO_TOKEN }}
+      TARGET_REPOSITORY: wastingnotime/integration-sandbox
+      EVENT_TYPE: contacts-web-production-candidate
+      SPA_IMAGE_URI: ${{ needs.publish-spa-image.outputs.image_uri }}
+      BFF_IMAGE_URI: ${{ needs.publish-bff-image.outputs.image_uri }}
+
+    steps:
+      - name: dispatch integration sandbox repository event
+        run: |
+          gh api "repos/${TARGET_REPOSITORY}/dispatches" \
+            -X POST \
+            -f event_type="${EVENT_TYPE}" \
+            -f client_payload[service]="contacts-web" \
+            -f client_payload[commit_sha]="${GITHUB_SHA}" \
+            -f client_payload[spa_image_uri]="${SPA_IMAGE_URI}" \
+            -f client_payload[bff_image_uri]="${BFF_IMAGE_URI}"

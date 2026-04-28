@@ -42,7 +42,7 @@ Add entries as the repository evolves.
 ## DEC-0009 - Keep Infra-Platform Promotion Out Of The App Repository Workflow
 
 - Date: 2026-04-28
-- Status: accepted
+- Status: superseded
 - Owners: both
 
 ### Context
@@ -59,6 +59,27 @@ Keep the PR creation step but make it optional. This was rejected because the co
 
 ### Notes
 The removed behavior lived in `.github/workflows/ci-web-docker.yml`.
+
+## DEC-0010 - Dispatch Production Candidates To Integration Sandbox
+
+- Date: 2026-04-28
+- Status: accepted
+- Owners: both
+
+### Context
+The app repository no longer owns infra-platform promotion PRs. The next promotion step needs to move the published SPA and BFF image references into the validation repository that composes system candidates and runs the cross-service checks.
+
+### Decision
+After publishing the SPA and BFF images, the app repository sends a `repository_dispatch` event to `wastingnotime/integration-sandbox` with the commit SHA and image URIs for the production candidate.
+
+### Consequences
+The app repo keeps ownership of image publication while integration-sandbox receives the candidate directly and can decide how to validate or promote it. The app repo no longer needs to know how infra promotion is represented as a pull request.
+
+### Alternatives considered
+Keep the app repo opening a PR in infra-platform. That was rejected because the promotion contract now routes candidate validation through integration-sandbox instead.
+
+### Notes
+The dispatch payload currently carries the service name, commit SHA, SPA image URI, and BFF image URI.
 
 ## DEC-0008 - Publish A Swarm-Compatible BFF Image For Production Delivery
 
