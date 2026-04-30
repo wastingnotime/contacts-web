@@ -31,6 +31,6 @@ Use tests as specification. Start with domain tests, add integration tests for m
 Use Conventional Commits for commit subjects, choosing an appropriate type such as `feat`, `fix`, `docs`, `refactor`, `test`, `build`, `ci`, or `chore`. Keep commits scoped to one slice or doc change, and include test evidence in pull requests.
 
 ## Campaign Coordination
-If a requested change affects more than one repository, look for the current campaign in `/home/henrique/repos/bitbucket/solareclipseglasses/management/campaigns/<campaign-name>/` and follow `/home/henrique/repos/bitbucket/solareclipseglasses/management/references/decisions/campaign_management_protocol_decision.md`.
+If a requested change affects more than one repository, look for the current campaign in `/home/henrique/repos/bitbucket/solareclipseglasses/management/campaigns/<campaign-name>/`.
 
 Treat campaign handoffs as the coordination layer only. Keep durable repository-specific knowledge, validation, and guidance inside this repository.
