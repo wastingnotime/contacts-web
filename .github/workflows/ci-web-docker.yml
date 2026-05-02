@@ -150,17 +150,24 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.INTEGRATION_SANDBOX_REPO_TOKEN }}
       TARGET_REPOSITORY: wastingnotime/integration-sandbox
-      EVENT_TYPE: contacts-web-production-candidate
+      EVENT_TYPE: candidate-image-updated
       SPA_IMAGE_URI: ${{ needs.publish-spa-image.outputs.image_uri }}
       BFF_IMAGE_URI: ${{ needs.publish-bff-image.outputs.image_uri }}
 
     steps:
       - name: dispatch integration sandbox repository event
         run: |
+          candidate_image="${SPA_IMAGE_URI%:*}"
+
           gh api "repos/${TARGET_REPOSITORY}/dispatches" \
             -X POST \
-            -f event_type="${EVENT_TYPE}" \
-            -f client_payload[service]="contacts-web" \
-            -f client_payload[commit_sha]="${GITHUB_SHA}" \
-            -f client_payload[spa_image_uri]="${SPA_IMAGE_URI}" \
-            -f client_payload[bff_image_uri]="${BFF_IMAGE_URI}"
+            --input - <<EOF
+          {
+            "event_type": "${EVENT_TYPE}",
+            "client_payload": {
+              "service": "contacts-web",
+              "image": "${candidate_image}",
+              "sha": "${GITHUB_SHA}"
+            }
+          }
+          EOF
