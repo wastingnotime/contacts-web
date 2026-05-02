@@ -1,5 +1,8 @@
 import { createServer } from "node:http";
-import { SpanStatusCode } from "@opentelemetry/api";
+import { performance } from "node:perf_hooks";
+
+import { ROOT_CONTEXT, SpanStatusCode } from "@opentelemetry/api";
+import { W3CTraceContextPropagator } from "@opentelemetry/core";
 
 import { getContactsErrorPayload, getStatusForError } from "./serverErrors.ts";
 import {
@@ -20,6 +23,26 @@ import {
   readTelemetryContextFromHeaders,
   createContactsTelemetryContext,
 } from "../../../src/shared/telemetry/contactsTelemetry.js";
+
+const traceContextPropagator = new W3CTraceContextPropagator();
+const requestHeaderGetter = {
+  get(carrier, key) {
+    const value = carrier[key] ?? carrier[key.toLowerCase()];
+
+    if (Array.isArray(value)) {
+      return value;
+    }
+
+    if (value === undefined) {
+      return undefined;
+    }
+
+    return [String(value)];
+  },
+  keys(carrier) {
+    return Object.keys(carrier);
+  },
+};
 
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, {
@@ -58,6 +81,31 @@ async function readRequestBody(request) {
   });
 }
 
+function finishRequest({ observability, span, startedAt, method, path, statusCode }) {
+  span.setAttribute("http.response.status_code", statusCode);
+  observability.recordRequestMetrics({
+    method,
+    path,
+    statusCode,
+    durationSeconds: (performance.now() - startedAt) / 1000,
+  });
+  span.end();
+}
+
+async function recordDependencyLatency(observability, operation, callback) {
+  const startedAt = performance.now();
+
+  try {
+    return await callback();
+  } finally {
+    observability.recordDependencyLatency({
+      dependencyName: "axiom-exp-contacts",
+      operation,
+      durationSeconds: (performance.now() - startedAt) / 1000,
+    });
+  }
+}
+
 export function createContactsWebBffServer({
   backendGateway,
   telemetryCollector,
@@ -86,13 +134,19 @@ export function createContactsWebBffServer({
 
   return createServer(async (request, response) => {
     const url = new URL(request.url || "/", "http://localhost");
+    const startedAt = performance.now();
     const requestTelemetryContext = readTelemetryContextFromHeaders(request.headers);
+    const parentContext = traceContextPropagator.extract(
+      ROOT_CONTEXT,
+      request.headers,
+      requestHeaderGetter,
+    );
     const span = selectedObservability.tracer.startSpan(`${request.method} ${url.pathname}`, {
       attributes: {
         "http.request.method": request.method,
         "url.path": url.pathname,
       },
-    });
+    }, parentContext);
     const spanContext = span.spanContext();
     const requestBffTelemetryContext = createContactsTelemetryContext({
       serviceName: "contacts-bff",
@@ -105,8 +159,14 @@ export function createContactsWebBffServer({
     });
 
     if (!url.pathname.startsWith("/api")) {
-      span.setAttribute("http.response.status_code", 404);
-      span.end();
+      finishRequest({
+        observability: selectedObservability,
+        span,
+        startedAt,
+        method: request.method,
+        path: url.pathname,
+        statusCode: 404,
+      });
       sendJson(response, 404, { message: "Not found." });
       return;
     }
@@ -115,8 +175,14 @@ export function createContactsWebBffServer({
 
     try {
       if (request.method === "GET" && apiPath === "/healthz") {
-        span.setAttribute("http.response.status_code", 200);
-        span.end();
+        finishRequest({
+          observability: selectedObservability,
+          span,
+          startedAt,
+          method: request.method,
+          path: url.pathname,
+          statusCode: 200,
+        });
         sendJson(response, 200, { status: "ok" });
         return;
       }
@@ -144,8 +210,14 @@ export function createContactsWebBffServer({
           // Telemetry relay is best-effort; browser acceptance should not depend on collector uptime.
         }
 
-        span.setAttribute("http.response.status_code", 202);
-        span.end();
+        finishRequest({
+          observability: selectedObservability,
+          span,
+          startedAt,
+          method: request.method,
+          path: url.pathname,
+          statusCode: 202,
+        });
         sendJson(response, 202, {
           accepted: true,
           telemetry,
@@ -154,56 +226,124 @@ export function createContactsWebBffServer({
       }
 
       if (request.method === "GET" && apiPath === "/contacts") {
-        sendJson(response, 200, await bffClient.listContacts(requestBffTelemetryContext));
-        span.setAttribute("http.response.status_code", 200);
-        span.end();
+        sendJson(
+          response,
+          200,
+          await recordDependencyLatency(selectedObservability, "list_contacts", () =>
+            bffClient.listContacts(requestBffTelemetryContext),
+          ),
+        );
+        finishRequest({
+          observability: selectedObservability,
+          span,
+          startedAt,
+          method: request.method,
+          path: url.pathname,
+          statusCode: 200,
+        });
         return;
       }
 
       if (request.method === "POST" && apiPath === "/contacts") {
         const body = await readRequestBody(request);
-        sendJson(response, 201, await bffClient.createContact(body ?? {}, requestBffTelemetryContext));
-        span.setAttribute("http.response.status_code", 201);
-        span.end();
+        sendJson(
+          response,
+          201,
+          await recordDependencyLatency(selectedObservability, "create_contact", () =>
+            bffClient.createContact(body ?? {}, requestBffTelemetryContext),
+          ),
+        );
+        finishRequest({
+          observability: selectedObservability,
+          span,
+          startedAt,
+          method: request.method,
+          path: url.pathname,
+          statusCode: 201,
+        });
         return;
       }
 
       if (request.method === "GET" && apiPath.startsWith("/contacts/")) {
         const contactId = decodeURIComponent(apiPath.slice("/contacts/".length));
-        sendJson(response, 200, await bffClient.getContact(contactId, requestBffTelemetryContext));
-        span.setAttribute("http.response.status_code", 200);
-        span.end();
+        sendJson(
+          response,
+          200,
+          await recordDependencyLatency(selectedObservability, "get_contact", () =>
+            bffClient.getContact(contactId, requestBffTelemetryContext),
+          ),
+        );
+        finishRequest({
+          observability: selectedObservability,
+          span,
+          startedAt,
+          method: request.method,
+          path: url.pathname,
+          statusCode: 200,
+        });
         return;
       }
 
       if (request.method === "PUT" && apiPath.startsWith("/contacts/")) {
         const contactId = decodeURIComponent(apiPath.slice("/contacts/".length));
         const body = await readRequestBody(request);
-        sendJson(response, 200, await bffClient.updateContact(contactId, body ?? {}, requestBffTelemetryContext));
-        span.setAttribute("http.response.status_code", 200);
-        span.end();
+        sendJson(
+          response,
+          200,
+          await recordDependencyLatency(selectedObservability, "update_contact", () =>
+            bffClient.updateContact(contactId, body ?? {}, requestBffTelemetryContext),
+          ),
+        );
+        finishRequest({
+          observability: selectedObservability,
+          span,
+          startedAt,
+          method: request.method,
+          path: url.pathname,
+          statusCode: 200,
+        });
         return;
       }
 
       if (request.method === "DELETE" && apiPath.startsWith("/contacts/")) {
         const contactId = decodeURIComponent(apiPath.slice("/contacts/".length));
-        await bffClient.deleteContact(contactId, requestBffTelemetryContext);
+        await recordDependencyLatency(selectedObservability, "delete_contact", () =>
+          bffClient.deleteContact(contactId, requestBffTelemetryContext),
+        );
         response.writeHead(204);
         response.end();
-        span.setAttribute("http.response.status_code", 204);
-        span.end();
+        finishRequest({
+          observability: selectedObservability,
+          span,
+          startedAt,
+          method: request.method,
+          path: url.pathname,
+          statusCode: 204,
+        });
         return;
       }
 
-      span.setAttribute("http.response.status_code", 404);
-      span.end();
+      finishRequest({
+        observability: selectedObservability,
+        span,
+        startedAt,
+        method: request.method,
+        path: url.pathname,
+        statusCode: 404,
+      });
       sendJson(response, 404, { message: "Not found." });
     } catch (error) {
       const { statusCode, payload } = createErrorResponse(error, "Unable to process request.");
       span.recordException(error);
       span.setStatus({ code: SpanStatusCode.ERROR, message: String(error?.message ?? error) });
-      span.setAttribute("http.response.status_code", statusCode);
-      span.end();
+      finishRequest({
+        observability: selectedObservability,
+        span,
+        startedAt,
+        method: request.method,
+        path: url.pathname,
+        statusCode,
+      });
       sendJson(response, statusCode, payload);
     }
   });

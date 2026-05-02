@@ -19,12 +19,15 @@ function createTestObservability() {
   const traceId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
   const spanId = "bbbbbbbbbbbbbbbb";
   const spans = [];
+  const requestMetrics = [];
+  const dependencyMetrics = [];
 
   const tracer = {
-    startSpan(name, options = {}) {
+    startSpan(name, options = {}, parentContext) {
       const span = {
         name,
         options,
+        parentContext,
         attributes: {},
         events: [],
         exceptions: [],
@@ -62,7 +65,15 @@ function createTestObservability() {
   return {
     tracer,
     spans,
+    requestMetrics,
+    dependencyMetrics,
     traceparent: `00-${traceId}-${spanId}-01`,
+    recordRequestMetrics(metric) {
+      requestMetrics.push(metric);
+    },
+    recordDependencyLatency(metric) {
+      dependencyMetrics.push(metric);
+    },
     shutdown: async () => {},
   };
 }
@@ -243,6 +254,7 @@ describe("contactsWebBffServer", () => {
     expect(deleteResponse.status).toBe(204);
 
     expect(backendGateway.listContacts).toHaveBeenCalledTimes(1);
+    expect(observability.spans[1].parentContext).toBeDefined();
     expect(backendGateway.listContacts.mock.calls[0][0]).toMatchObject({
       traceparent: observability.traceparent,
       serviceName: "contacts-bff",
@@ -296,6 +308,41 @@ describe("contactsWebBffServer", () => {
       appVersion: "2026.04.22",
       environment: "test",
     }));
+    expect(observability.requestMetrics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          method: "GET",
+          path: "/api/contacts",
+          statusCode: 200,
+        }),
+        expect.objectContaining({
+          method: "POST",
+          path: "/api/contacts",
+          statusCode: 201,
+        }),
+        expect.objectContaining({
+          method: "DELETE",
+          path: "/api/contacts/contact-1",
+          statusCode: 204,
+        }),
+      ]),
+    );
+    expect(observability.dependencyMetrics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          dependencyName: "axiom-exp-contacts",
+          operation: "list_contacts",
+        }),
+        expect.objectContaining({
+          dependencyName: "axiom-exp-contacts",
+          operation: "create_contact",
+        }),
+        expect.objectContaining({
+          dependencyName: "axiom-exp-contacts",
+          operation: "delete_contact",
+        }),
+      ]),
+    );
   });
 
   it("maps invalid browser drafts to validation failures", async () => {
@@ -308,10 +355,11 @@ describe("contactsWebBffServer", () => {
       updateContact: async () => ({ id: "contact-1", first_name: "Ada", last_name: "Lovelace", phone_number: "1" }),
       deleteContact: async () => null,
     };
+    const observability = createTestObservability();
 
     activeServer = await startContactsWebBffServer({
       backendGateway,
-      observability: createTestObservability(),
+      observability,
       port: 0,
     });
 
@@ -334,6 +382,13 @@ describe("contactsWebBffServer", () => {
     expect(await response.json()).toMatchObject({
       code: "validation",
     });
+    expect(observability.requestMetrics).toEqual([
+      expect.objectContaining({
+        method: "POST",
+        path: "/api/contacts",
+        statusCode: 400,
+      }),
+    ]);
   });
 
   it("relays browser telemetry to the shared collector boundary", async () => {
