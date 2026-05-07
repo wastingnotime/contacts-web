@@ -79,3 +79,13 @@ The owning repository should decide whether repeated promotions should:
 No further `contacts-web` code change is required for the original dispatch failure.
 
 `contacts-web` should treat downstream promotion branch collisions as an external handoff finding unless the target dispatch contract changes again.
+
+## Resolution
+
+Resolved.
+
+Evidence after the finding was recorded:
+
+- `integration-sandbox` changed the promotion branch contract to include workflow run identity
+- repeated valid runs now produce unique promotion branches instead of reusing the same remote branch name
+- the repository test suite passes with the updated promotion contract
