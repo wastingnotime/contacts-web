@@ -2,10 +2,14 @@ package bff
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
+
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
 type fakeBackendGateway struct {
@@ -44,6 +48,39 @@ type recordingTelemetryCollector struct {
 func (r *recordingTelemetryCollector) RecordTelemetry(event TelemetryEvent, context TelemetryContext) error {
 	r.events = append(r.events, event)
 	r.contexts = append(r.contexts, context)
+	return nil
+}
+
+type recordedSpan struct {
+	name          string
+	traceID       string
+	parentTraceID string
+	parentSpanID  string
+}
+
+type recordingSpanExporter struct {
+	mu    sync.Mutex
+	spans []recordedSpan
+}
+
+func (e *recordingSpanExporter) ExportSpans(_ context.Context, spans []sdktrace.ReadOnlySpan) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	for _, span := range spans {
+		parent := span.Parent()
+		e.spans = append(e.spans, recordedSpan{
+			name:          span.Name(),
+			traceID:       span.SpanContext().TraceID().String(),
+			parentTraceID: parent.TraceID().String(),
+			parentSpanID:  parent.SpanID().String(),
+		})
+	}
+
+	return nil
+}
+
+func (e *recordingSpanExporter) Shutdown(context.Context) error {
 	return nil
 }
 
@@ -185,6 +222,77 @@ func TestServerRoutesThroughBffBoundary(t *testing.T) {
 	deleteResponse := mustDoRequest(t, server, http.MethodDelete, "/api/contacts/contact-1", nil, telemetryContext)
 	if deleteResponse.StatusCode != http.StatusNoContent {
 		t.Fatalf("expected delete response, got %d", deleteResponse.StatusCode)
+	}
+}
+
+func TestServerExportsRequestSpanAndPropagatesTraceContext(t *testing.T) {
+	exporter := &recordingSpanExporter{}
+	tracerProvider := sdktrace.NewTracerProvider(
+		sdktrace.WithSpanProcessor(sdktrace.NewSimpleSpanProcessor(exporter)),
+	)
+
+	backend := fakeBackendGateway{
+		listContactsFn: func(context TelemetryContext) ([]ContactTransport, error) {
+			if context.TraceID != "0123456789abcdef0123456789abcdef" {
+				t.Fatalf("expected propagated trace id, got %#v", context)
+			}
+			if context.TraceParent == "" {
+				t.Fatalf("expected propagated traceparent, got %#v", context)
+			}
+
+			return []ContactTransport{
+				{
+					ID:          "contact-1",
+					FirstName:   "Ada",
+					LastName:    "Lovelace",
+					PhoneNumber: "5550001",
+				},
+			}, nil
+		},
+	}
+
+	server := httptest.NewServer(NewServer(Dependencies{
+		BackendGateway: backend,
+		Observability: &RuntimeObservability{
+			tracer: tracerProvider.Tracer(defaultTelemetryBffName),
+			shutdown: func() error {
+				return tracerProvider.Shutdown(context.Background())
+			},
+		},
+	}).Handler())
+	defer server.Close()
+
+	request, err := http.NewRequest(http.MethodGet, server.URL+"/api/contacts", nil)
+	if err != nil {
+		t.Fatalf("failed to build request: %v", err)
+	}
+	request.Header.Set("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01")
+	request.Header.Set("x-contacts-trace-id", "0123456789abcdef0123456789abcdef")
+
+	response, err := server.Client().Do(request)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("expected success, got %d", response.StatusCode)
+	}
+
+	if len(exporter.spans) != 1 {
+		t.Fatalf("expected one exported span, got %d", len(exporter.spans))
+	}
+	if exporter.spans[0].name != "GET /api/contacts" {
+		t.Fatalf("unexpected span name: %#v", exporter.spans[0])
+	}
+	if exporter.spans[0].traceID != "0123456789abcdef0123456789abcdef" {
+		t.Fatalf("expected exported trace id to match inbound request, got %#v", exporter.spans[0])
+	}
+	if exporter.spans[0].parentTraceID != "0123456789abcdef0123456789abcdef" {
+		t.Fatalf("expected exported span parent trace id to match inbound trace, got %#v", exporter.spans[0])
+	}
+	if exporter.spans[0].parentSpanID != "0123456789abcdef" {
+		t.Fatalf("expected exported span parent span id to match inbound traceparent, got %#v", exporter.spans[0])
 	}
 }
 
