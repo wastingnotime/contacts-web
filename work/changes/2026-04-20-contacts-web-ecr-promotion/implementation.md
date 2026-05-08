@@ -16,7 +16,6 @@ Workflow file:
 Runtime assumptions:
 
 - `secrets.ECR_ROLE_ARN` points at the AWS role used for ECR access
-- `secrets.INFRA_REPO_TOKEN` can push branches and create pull requests in `wastingnotime/infrastructure`
 - the infra-side ECR trust policy accepts the `wastingnotime/contacts-web` repository subject
 
 Configured repository inputs:
@@ -24,7 +23,6 @@ Configured repository inputs:
 - `vars.AWS_DEFAULT_REGION = us-east-1`
 - `vars.ECR_ROLE_NAME = github-actions-ecr`
 - `secrets.ECR_ROLE_ARN = arn:aws:iam::590183855481:role/github-actions-ecr`
-- `secrets.INFRA_REPO_TOKEN` reused from the current authenticated GitHub CLI token
 
 Not retained:
 
