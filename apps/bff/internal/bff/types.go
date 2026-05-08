@@ -1,5 +1,7 @@
 package bff
 
+import "go.opentelemetry.io/otel/trace"
+
 type ContactViewModel struct {
 	ID          string `json:"id"`
 	FirstName   string `json:"firstName"`
@@ -82,4 +84,10 @@ type RuntimeConfig struct {
 type Dependencies struct {
 	BackendGateway     ContactsBackendGateway
 	TelemetryCollector TelemetryCollector
+	Observability      *RuntimeObservability
+}
+
+type RuntimeObservability struct {
+	tracer   trace.Tracer
+	shutdown func() error
 }

@@ -12,11 +12,17 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/propagation"
+	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
 type Server struct {
 	client             *ContactsWebBffClient
 	telemetryCollector TelemetryCollector
+	observability      *RuntimeObservability
 }
 
 func NewServer(dependencies Dependencies) *Server {
@@ -32,6 +38,7 @@ func NewServer(dependencies Dependencies) *Server {
 	return &Server{
 		client:             NewContactsWebBffClient(dependencies.BackendGateway),
 		telemetryCollector: telemetryCollector,
+		observability:      dependencies.Observability,
 	}
 }
 
@@ -52,78 +59,116 @@ func (s *Server) serveHTTP(response http.ResponseWriter, request *http.Request) 
 	}
 
 	browserTelemetryContext := ReadTelemetryContextFromHeaders(request.Header)
-	bffTelemetryContext := CreateChildTelemetryContext(browserTelemetryContext, defaultTelemetryBffName)
+	parentContext := propagation.TraceContext{}.Extract(request.Context(), propagation.HeaderCarrier(request.Header))
+	_, span := s.observability.Tracer().Start(
+		parentContext,
+		request.Method+" "+path,
+		oteltrace.WithAttributes(
+			attribute.String("http.request.method", request.Method),
+			attribute.String("url.path", path),
+		),
+	)
+	defer span.End()
+
+	spanContext := span.SpanContext()
+	bffTelemetryContext := browserTelemetryContext
+	bffTelemetryContext.ServiceName = defaultTelemetryBffName
+	bffTelemetryContext.TraceID = spanContext.TraceID().String()
+	bffTelemetryContext.SpanID = spanContext.SpanID().String()
+	bffTelemetryContext.TraceParent = CreateTraceParent(bffTelemetryContext.TraceID, bffTelemetryContext.SpanID, true)
 
 	switch {
 	case request.Method == http.MethodGet && apiPath == "/healthz":
+		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusOK))
 		writeJSON(response, http.StatusOK, map[string]string{"status": "ok"})
 	case request.Method == http.MethodPost && apiPath == "/telemetry":
-		s.handleTelemetry(response, request, browserTelemetryContext)
+		s.handleTelemetry(response, request, browserTelemetryContext, span)
 	case request.Method == http.MethodGet && apiPath == "/contacts":
 		contacts, err := s.client.ListContacts(bffTelemetryContext)
 		if err != nil {
+			s.recordRequestFailure(span, err)
 			respondWithError(response, err, "Unable to load contacts.")
 			return
 		}
+		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusOK))
 		writeJSON(response, http.StatusOK, contacts)
 	case request.Method == http.MethodPost && apiPath == "/contacts":
 		var draft ContactDraft
 		if err := decodeRequestJSON(request.Body, &draft); err != nil {
-			respondWithError(response, NewAPIError("The contact data is invalid.", "validation"), "Unable to create contact.")
+			apiErr := NewAPIError("The contact data is invalid.", "validation")
+			s.recordRequestFailure(span, apiErr)
+			respondWithError(response, apiErr, "Unable to create contact.")
 			return
 		}
 		contact, err := s.client.CreateContact(draft, bffTelemetryContext)
 		if err != nil {
+			s.recordRequestFailure(span, err)
 			respondWithError(response, err, "Unable to create contact.")
 			return
 		}
+		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusCreated))
 		writeJSON(response, http.StatusCreated, contact)
 	case request.Method == http.MethodGet && strings.HasPrefix(apiPath, "/contacts/"):
 		contactID, err := decodeContactID(apiPath)
 		if err != nil {
-			respondWithError(response, NewAPIError("The contact data is invalid.", "validation"), "Unable to load contact.")
+			apiErr := NewAPIError("The contact data is invalid.", "validation")
+			s.recordRequestFailure(span, apiErr)
+			respondWithError(response, apiErr, "Unable to load contact.")
 			return
 		}
 		contact, err := s.client.GetContact(contactID, bffTelemetryContext)
 		if err != nil {
+			s.recordRequestFailure(span, err)
 			respondWithError(response, err, "Unable to load contact.")
 			return
 		}
+		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusOK))
 		writeJSON(response, http.StatusOK, contact)
 	case request.Method == http.MethodPut && strings.HasPrefix(apiPath, "/contacts/"):
 		contactID, err := decodeContactID(apiPath)
 		if err != nil {
-			respondWithError(response, NewAPIError("The contact data is invalid.", "validation"), "Unable to update contact.")
+			apiErr := NewAPIError("The contact data is invalid.", "validation")
+			s.recordRequestFailure(span, apiErr)
+			respondWithError(response, apiErr, "Unable to update contact.")
 			return
 		}
 		var draft ContactDraft
 		if err := decodeRequestJSON(request.Body, &draft); err != nil {
-			respondWithError(response, NewAPIError("The contact data is invalid.", "validation"), "Unable to update contact.")
+			apiErr := NewAPIError("The contact data is invalid.", "validation")
+			s.recordRequestFailure(span, apiErr)
+			respondWithError(response, apiErr, "Unable to update contact.")
 			return
 		}
 		contact, err := s.client.UpdateContact(contactID, draft, bffTelemetryContext)
 		if err != nil {
+			s.recordRequestFailure(span, err)
 			respondWithError(response, err, "Unable to update contact.")
 			return
 		}
+		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusOK))
 		writeJSON(response, http.StatusOK, contact)
 	case request.Method == http.MethodDelete && strings.HasPrefix(apiPath, "/contacts/"):
 		contactID, err := decodeContactID(apiPath)
 		if err != nil {
-			respondWithError(response, NewAPIError("The contact data is invalid.", "validation"), "Unable to delete contact.")
+			apiErr := NewAPIError("The contact data is invalid.", "validation")
+			s.recordRequestFailure(span, apiErr)
+			respondWithError(response, apiErr, "Unable to delete contact.")
 			return
 		}
 		if err := s.client.DeleteContact(contactID, bffTelemetryContext); err != nil {
+			s.recordRequestFailure(span, err)
 			respondWithError(response, err, "Unable to delete contact.")
 			return
 		}
+		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusNoContent))
 		response.WriteHeader(http.StatusNoContent)
 	default:
+		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusNotFound))
 		writeJSON(response, http.StatusNotFound, map[string]string{"message": "Not found."})
 	}
 }
 
-func (s *Server) handleTelemetry(response http.ResponseWriter, request *http.Request, context TelemetryContext) {
+func (s *Server) handleTelemetry(response http.ResponseWriter, request *http.Request, context TelemetryContext, span oteltrace.Span) {
 	defer request.Body.Close()
 
 	var submission map[string]any
@@ -167,6 +212,12 @@ func (s *Server) handleTelemetry(response http.ResponseWriter, request *http.Req
 		eventName = "browser_event"
 	}
 
+	span.AddEvent("browser.telemetry", oteltrace.WithAttributes(
+		attribute.String("browser.event_name", eventName),
+		attribute.String("browser.path", stringValue(submission["path"])),
+		attribute.String("browser.method", stringValue(submission["method"])),
+	))
+
 	telemetry := CreateTelemetryEvent(
 		eventName,
 		detail,
@@ -177,10 +228,20 @@ func (s *Server) handleTelemetry(response http.ResponseWriter, request *http.Req
 	)
 
 	_ = s.telemetryCollector.RecordTelemetry(telemetry, context)
+	span.SetAttributes(attribute.Int("http.response.status_code", http.StatusAccepted))
 	writeJSON(response, http.StatusAccepted, map[string]any{
 		"accepted":  true,
 		"telemetry": telemetry,
 	})
+}
+
+func (s *Server) recordRequestFailure(span oteltrace.Span, err error) {
+	if span == nil || err == nil {
+		return
+	}
+
+	span.RecordError(err)
+	span.SetStatus(codes.Error, err.Error())
 }
 
 func decodeContactID(apiPath string) (string, error) {
@@ -224,12 +285,18 @@ func writeJSON(response http.ResponseWriter, statusCode int, payload any) {
 }
 
 type Runtime struct {
-	server   *http.Server
-	listener net.Listener
-	BaseURL  string
+	server        *http.Server
+	listener      net.Listener
+	observability *RuntimeObservability
+	BaseURL       string
 }
 
 func StartRuntimeFromEnv() (*Runtime, error) {
+	observability, err := newRuntimeObservabilityFromEnv()
+	if err != nil {
+		return nil, err
+	}
+
 	return StartRuntime(RuntimeConfig{
 		Host: GetContactsWebBffHost(),
 		Port: GetContactsWebBffPort(),
@@ -241,6 +308,7 @@ func StartRuntimeFromEnv() (*Runtime, error) {
 			nil,
 		),
 		TelemetryCollector: NewHTTPTelemetryCollector(GetContactsTelemetryCollectorBaseURL(), nil),
+		Observability:      observability,
 	})
 }
 
@@ -255,9 +323,10 @@ func StartRuntime(config RuntimeConfig, dependencies Dependencies) (*Runtime, er
 	}
 
 	runtime := &Runtime{
-		server:   server,
-		listener: listener,
-		BaseURL:  fmt.Sprintf("http://127.0.0.1:%d", listener.Addr().(*net.TCPAddr).Port),
+		server:        server,
+		listener:      listener,
+		observability: dependencies.Observability,
+		BaseURL:       fmt.Sprintf("http://127.0.0.1:%d", listener.Addr().(*net.TCPAddr).Port),
 	}
 
 	go func() {
@@ -272,7 +341,15 @@ func (r *Runtime) Shutdown(ctx context.Context) error {
 		return nil
 	}
 
-	return r.server.Shutdown(ctx)
+	if err := r.server.Shutdown(ctx); err != nil {
+		return err
+	}
+
+	if r.observability != nil {
+		return r.observability.Shutdown()
+	}
+
+	return nil
 }
 
 func stringValue(value any) string {
