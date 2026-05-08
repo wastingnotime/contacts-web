@@ -2,11 +2,11 @@
 
 ## Purpose
 
-Define the web delivery boundary for `contacts-web` so the Solid SPA talks to a TypeScript web BFF instead of directly to the backend API.
+Define the web delivery boundary for `contacts-web` so the Solid SPA talks to a Go web BFF instead of directly to the backend API.
 
 This slice establishes the web BFF as a separate runtime boundary inside the repository and routes the browser contact delivery path through it, while keeping contact business rules in the external backend.
 
-It refines the browser -> TypeScript BFF -> backend shape for the current contacts experience.
+It refines the browser -> Go BFF -> backend shape for the current contacts experience.
 The current implementation already exposes that shape through an actual BFF server process and browser `/api` routing.
 
 ## Selected Pack
@@ -16,7 +16,7 @@ The current implementation already exposes that shape through an actual BFF serv
 ## Runtime Targets
 
 - Solid browser SPA runtime
-- Node.js plus TypeScript web BFF runtime
+- Go web BFF runtime
 - external `contacts-v2` API
 - deterministic test doubles for SPA-to-BFF and BFF-to-backend interaction
 
@@ -24,12 +24,12 @@ Early-phase rule:
 
 - `build` should make the SPA talk to the web BFF instead of directly to the backend API
 - `build` should make the web BFF own request aggregation, claims plumbing, and backend contract adaptation
-- `build` should implement the BFF in TypeScript with runtime validation at the boundary
+- `build` should implement the BFF in Go with runtime validation at the boundary
 - `build` should not move domain rules, persistence, or backend authorization policy into the repository
 
 ## Architecture Mode
 
-- browser/SPA/TypeScript-BFF/backend split
+- browser/SPA/Go-BFF/backend split
 - explicit delivery adapter between the SPA and the contacts backend
 - web-specific BFF boundary inside the same repository as the SPA
 
@@ -38,7 +38,7 @@ Interpretation:
 - this repository owns browser behavior, route semantics, request aggregation, and user-visible feedback
 - this repository does not own contact persistence or authoritative domain validation
 - the BFF must isolate backend naming, claims semantics, and response categories from SPA components
-- TypeScript is used where the contract boundary is most valuable: request validation, response shaping, and backend mapping
+- Go is used where the contract boundary is most valuable: request validation, response shaping, and backend mapping
 
 ## Discovery Scope
 
@@ -46,7 +46,7 @@ Included in this slice:
 
 - create a separate SPA runtime boundary and web BFF runtime boundary in the repository shape
 - route the current browser contact list, create, edit, and delete flows through the web BFF instead of direct backend access
-- add a TypeScript BFF server entrypoint and a typed gateway layer
+- add a Go BFF server entrypoint and a typed gateway layer
 - keep backend contract mapping explicit in the BFF
 - preserve user-visible CRUD behavior while shifting delivery responsibility out of the SPA
 - keep claims handling explicit in the BFF boundary without introducing login UX
@@ -58,7 +58,7 @@ Contract map for this slice:
 - BFF-facing backend requests use the contacts backend transport contract
 - the BFF preserves backend `400`, `403`, `404`, and `409` categories when mapping user-facing failures
 - the BFF may aggregate backend calls when that simplifies browser delivery
-- BFF request/response validation should be enforced with TypeScript types plus runtime checks at the adapter boundary
+- BFF request/response validation should be enforced with Go types plus runtime checks at the adapter boundary
 - health checks remain a backend/runtime concern, not a SPA state concern
 
 Excluded from this slice:
@@ -205,7 +205,7 @@ Failure surface:
 - the BFF is the explicit boundary for request aggregation and claims plumbing
 - backend transport mapping is explicit and isolated
 - the browser must not silently collapse authorization failure into generic failure
-- TypeScript is justified in the BFF because this is the contract translation boundary, not a generic utility layer
+- Go is justified in the BFF because this is the contract translation boundary, not a generic utility layer
 - the browser must not call the backend API directly for the contacts workflows in this slice
 
 ## Client Model Shape Hypothesis

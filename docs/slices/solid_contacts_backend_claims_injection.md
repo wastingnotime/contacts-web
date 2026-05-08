@@ -16,7 +16,7 @@ The implemented boundary already treats claims as a BFF concern on the live brow
 ## Runtime Targets
 
 - Solid browser client runtime
-- Node.js plus TypeScript BFF runtime
+- Go BFF runtime
 - HTTP backend contract represented behind the BFF boundary
 - deterministic client-side test doubles for backend interaction during build
 

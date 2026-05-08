@@ -146,7 +146,7 @@ The root license files and any release metadata should be kept consistent with t
 ## DEC-0006 - Keep The Web BFF In The Contacts-Web Repo
 
 - Date: 2026-04-22
-- Status: accepted
+- Status: superseded
 - Owners: both
 
 ### Context
@@ -156,7 +156,7 @@ The extracted BFF architecture summary argues for a web-specific Backend for Fro
 The repository now treats `contacts-web` as a multi-runtime web delivery repository containing:
 
 - a Solid SPA
-- a Node.js plus TypeScript web BFF
+- a Go web BFF
 - shared browser-facing contracts where useful
 
 The BFF is a separate app, not a mixed concern inside SPA components. The repo does not own backend domain logic, persistence, or backend authorization policy. Mobile may later adopt its own BFF rather than sharing this one.
@@ -173,6 +173,28 @@ Move the BFF into a separate repository. This was rejected for the current phase
 
 ### Notes
 Target structure should evolve toward `apps/spa/`, `apps/bff/`, and `packages/shared/` where needed. The backend domain/API stays external in `contacts-v2`.
+The runtime choice in this decision was superseded by DEC-0011, which moved the BFF implementation from Node.js plus TypeScript to Go.
+
+## DEC-0011 - Migrate The Web BFF Runtime To Go
+
+- Date: 2026-05-08
+- Status: accepted
+- Owners: both
+
+### Context
+The repository already owns the web BFF boundary, but the implementation was still Node.js plus TypeScript. The user requested a Go migration while keeping the browser -> BFF -> backend contract intact.
+
+### Decision
+Keep the browser SPA in JavaScript, but migrate the `apps/bff` runtime to Go. Preserve the same `/api` surface, the same request claims headers, the same backend mapping semantics, and the same production port so the browser and publication artifacts do not have to change shape again.
+
+### Consequences
+The BFF now has its own Go module and Go tests. The container image and local dev script target Go directly. Repository docs and test harnesses should treat the BFF as a Go runtime rather than a TypeScript one.
+
+### Alternatives considered
+Keep the TypeScript BFF and wrap it with Go at the edge. That was rejected because it would preserve the JS runtime underneath the boundary instead of actually migrating the service.
+
+### Notes
+This decision supersedes the Node.js plus TypeScript runtime choice in DEC-0006 and the earlier TypeScript BFF slice language.
 
 ## DEC-0001 - Separate MRL Core From Implementation Packs
 

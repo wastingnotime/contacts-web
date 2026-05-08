@@ -15,7 +15,7 @@ The list/create seam now lives inside the BFF-backed browser delivery path rathe
 ## Runtime Targets
 
 - Solid browser client runtime
-- Node.js plus TypeScript web BFF runtime
+- Go web BFF runtime
 - HTTP backend contract represented behind the BFF boundary
 - local deterministic test doubles for backend interaction during build
 

@@ -13,7 +13,7 @@ This slice does not change product behavior. It establishes the telemetry contra
 ## Runtime Targets
 
 - Solid browser SPA runtime
-- Node.js plus TypeScript web BFF runtime
+- Go web BFF runtime
 - external `contacts-v2` API
 - controlled browser telemetry ingress through the BFF
 - backend export path that can feed a collector or observability backend

@@ -14,7 +14,7 @@ The current publication shape is paired with a manifest handoff in `work/publica
 ## Runtime Targets
 
 - Solid browser SPA runtime
-- Node.js plus TypeScript web BFF runtime
+- Go web BFF runtime
 - external `contacts-v2` API runtime
 - portable static SPA container image
 - Swarm-compatible BFF container image that binds on the production port for Traefik ingress
@@ -30,7 +30,7 @@ Early-phase rule:
 
 ## Architecture Mode
 
-- browser/SPA/TypeScript-BFF/backend split with explicit production packaging
+- browser/SPA/Go-BFF/backend split with explicit production packaging
 - production ingress through Traefik
 - separate static browser asset container and BFF container
 - manifest-backed production image publication handoff

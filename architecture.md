@@ -31,7 +31,7 @@ Implementation shape is selected through a pack.
 This repository currently adopts the `polyglot_client_server` pack. In this repository, that pack is interpreted as a multi-runtime browser delivery shape:
 
 - Solid SPA runtime
-- Node.js plus TypeScript web BFF runtime
+- Go web BFF runtime
 - external `contacts-v2` API runtime
 
 Other repositories may instead adopt:
@@ -67,7 +67,7 @@ That statement is local to this selected pack. MRL as a workflow does not requir
 The active repository target is:
 
 - one Solid browser SPA
-- one web BFF in the same repository
+- one Go web BFF in the same repository
 - an explicit HTTP/API contract boundary to the contacts backend
 - tests split between SPA behavior, BFF behavior, and contract mapping
 
@@ -124,7 +124,7 @@ tests/spa/ --------------> browser pages and workflow modules
 tests/bff/ --------------> web adapter behavior and request shaping
 tests/contracts/ --------> transport mapping and gateway behavior
 apps/spa/ ---------------> Solid route-level workflow composition
-apps/bff/ ---------------> Node.js plus TypeScript web delivery adapter
+apps/bff/ ---------------> Go web delivery adapter
 packages/shared/ ---------> shared contracts and client-facing data shapes
 ```
 

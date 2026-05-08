@@ -16,10 +16,12 @@ describe("contacts web production delivery artifacts", () => {
 
     expect(spaDockerfile).toContain("nginx:1.27-alpine");
     expect(spaDockerfile).toContain("EXPOSE 80");
-    expect(bffDockerfile).toContain("FROM node:25-alpine");
+    expect(bffDockerfile).toContain("FROM golang:1.25-alpine");
+    expect(bffDockerfile).toContain("go test ./...");
+    expect(bffDockerfile).toContain("go build -o /out/contacts-web-bff ./cmd/bff");
     expect(bffDockerfile).toContain("ENV CONTACTS_WEB_BFF_HOST=0.0.0.0");
     expect(bffDockerfile).toContain("ENV CONTACTS_WEB_BFF_PORT=4010");
     expect(bffDockerfile).toContain("EXPOSE 4010");
-    expect(bffDockerfile).toContain("apps/bff/src/cli.ts");
+    expect(bffDockerfile).toContain('ENTRYPOINT ["./contacts-web-bff"]');
   });
 });

@@ -14,7 +14,7 @@ The current implementation reuses the same transport mapper, request-claims boun
 ## Runtime Targets
 
 - Solid browser client runtime
-- Node.js plus TypeScript web BFF runtime
+- Go web BFF runtime
 - HTTP backend contract represented behind the BFF boundary
 - deterministic client-side test doubles for backend interaction during build
 

@@ -6,7 +6,7 @@ import {
   contactsMockServer,
   resetContactsMockServerState,
 } from "../src/client/mock/contactsMockServer";
-import { DEFAULT_CONTACTS_TELEMETRY_COLLECTOR_BASE_URL } from "../apps/bff/src/config.ts";
+import { DEFAULT_CONTACTS_TELEMETRY_COLLECTOR_BASE_URL } from "../src/shared/config/contactsBffDefaults.js";
 
 contactsMockServer.use(
   http.post(`${DEFAULT_CONTACTS_TELEMETRY_COLLECTOR_BASE_URL}/telemetry`, async () => {
