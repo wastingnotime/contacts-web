@@ -39,6 +39,27 @@ Any additional implementation guidance, migration note, or follow-up.
 
 Add entries as the repository evolves.
 
+## DEC-0012 - Add CI Lint And Security Checks To The Delivery Workflow With Staged Enablement
+
+- Date: 2026-05-09
+- Status: accepted
+- Owners: both
+
+### Context
+The repository needed workflow linting in the CI pipeline and a place to stage security scanners without turning them on prematurely. The existing delivery workflow was the right place to keep the checks close to the publish path.
+
+### Decision
+Add `actionlint` through `reviewdog` to `.github/workflows/ci-web-docker.yml` and keep `checkov` and `trivy` defined but disabled with `if: ${{ false }}` until the repo is ready to enable them.
+
+### Consequences
+Workflow validation becomes part of the delivery CI instead of an ad hoc check. The security scanners are now documented in the pipeline definition, but they will not consume runtime until their temporary disablement is removed.
+
+### Alternatives considered
+Create a separate CI workflow for the linting and scanner jobs. That was rejected because keeping them in the delivery workflow reduces workflow sprawl and keeps the checks adjacent to the release path.
+
+### Notes
+The disabled jobs still carry the intended scanner configuration so enablement is a bounded workflow edit rather than a redesign.
+
 ## DEC-0009 - Keep Infra-Platform Promotion Out Of The App Repository Workflow
 
 - Date: 2026-04-28

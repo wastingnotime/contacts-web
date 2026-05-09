@@ -25,6 +25,8 @@ concurrency:
 permissions:
   contents: read
   id-token: write
+  checks: write
+  security-events: write
 
 env:
   AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
@@ -32,6 +34,62 @@ env:
   BFF_IMAGE_NAME: contacts-web
 
 jobs:
+  validate-workflows:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v5
+
+      - name: run actionlint through reviewdog
+        uses: reviewdog/action-actionlint@v1.65.2
+        with:
+          github_token: ${{ github.token }}
+          reporter: github-check
+
+  checkov:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v5
+
+      - name: run checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          output_format: cli,sarif
+          output_file_path: console,checkov-results.sarif
+
+      - name: upload checkov sarif
+        if: success() || failure()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: checkov-results.sarif
+
+  trivy:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v5
+
+      - name: run trivy filesystem scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          ignore-unfixed: true
+          format: sarif
+          output: trivy-results.sarif
+
+      - name: upload trivy sarif
+        if: success() || failure()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+
   publish-spa-image:
     runs-on: ubuntu-latest
 

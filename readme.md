@@ -142,5 +142,6 @@ npm run storybook
 
 - Keep the README focused on the contacts experience, not on the MRL starter history.
 - Record important structural or product decisions in `decisions.md`.
+- The delivery workflow now runs `reviewdog`-backed `actionlint`; `checkov` and `trivy` are present in the same workflow but intentionally disabled until they are ready to be turned on.
 - Preserve semantic and slice artifacts under `docs/` and `work/` as the repository evolves.
 - Treat MRL process material as MIT and `contacts-web` product artifacts as MPL 2.0, per the split-license decision in `decisions.md`.
