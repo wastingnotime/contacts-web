@@ -1,0 +1,15 @@
+[tools]
+node = "25.9.0"
+go = "1.25.1"
+
+[tasks.dev]
+run = "npm run dev"
+
+[tasks.dev-bff]
+run = "npm run dev:bff"
+
+[tasks.test]
+run = "npm test"
+
+[tasks.test-bff]
+run = "npm run test:bff"

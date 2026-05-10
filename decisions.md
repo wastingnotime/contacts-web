@@ -39,6 +39,32 @@ Any additional implementation guidance, migration note, or follow-up.
 
 Add entries as the repository evolves.
 
+## DEC-0013 - Add A Unified Repo-Level Toolchain Pin
+
+- Date: 2026-05-10
+- Status: accepted
+- Owners: both
+
+### Context
+The repository already pinned Node in `.nvmrc` and Go in `apps/bff/go.mod`, but the version declarations were split across different files. That made onboarding and environment setup slightly more manual than necessary.
+
+### Decision
+Add a root-level `.tool-versions` file that records the current Node and Go versions in one place:
+
+- `nodejs 25.9.0`
+- `golang 1.25.1`
+
+Keep the existing `.nvmrc` and Go module version pin in place for compatibility with the current tooling.
+
+### Consequences
+The repository now has a single obvious place to read the intended local tool versions, while existing workflows keep working unchanged. Future version bumps need to stay aligned across `.tool-versions`, `.nvmrc`, and `go.mod`.
+
+### Alternatives considered
+Replace `.nvmrc` and rely only on `.tool-versions`. That was rejected because the repository already uses `.nvmrc`, and keeping both avoids disrupting existing setup flows.
+
+### Notes
+This is a coordination file, not a runtime dependency. It should be updated whenever the repo intentionally changes its supported Node or Go version.
+
 ## DEC-0012 - Add CI Lint And Security Checks To The Delivery Workflow With Staged Enablement
 
 - Date: 2026-05-09
