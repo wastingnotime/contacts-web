@@ -39,6 +39,27 @@ Any additional implementation guidance, migration note, or follow-up.
 
 Add entries as the repository evolves.
 
+## DEC-0014 - Keep CI On GitHub-Hosted Runners And Push Any Self-Hosted Need To Deploy Transport
+
+- Date: 2026-05-14
+- Status: accepted
+- Owners: both
+
+### Context
+The repository's delivery workflow needs a clear boundary between ordinary CI work and any downstream deployment transport. The current `ci-web-docker` workflow already runs build, test, lint, and image publication jobs on GitHub-hosted runners, so the remaining question is where any self-hosted execution would belong if deployment transport later requires it.
+
+### Decision
+Keep the repository's CI and publication workflow on GitHub-hosted runners by default. Use self-hosted execution only for downstream deployment transport or cluster-adjacent runtime access when a separate repository or environment explicitly owns that requirement.
+
+### Consequences
+Build, test, lint, and publication remain portable and easy to run in GitHub Actions. Any future self-hosted requirement must be justified as a deployment transport concern rather than as a CI convenience, which keeps this repository's workflow boundary simple and explicit.
+
+### Alternatives considered
+Move publication or validation jobs onto self-hosted runners preemptively. That was rejected because it would couple ordinary CI to deployment topology without a clear need in this repository.
+
+### Notes
+The existing `ci-web-docker` workflow already satisfies the GitHub-hosted default with `ubuntu-latest`. If a downstream deployment repository later needs self-hosted transport, that decision should live with the deployment owner, not here.
+
 ## DEC-0013 - Add A Unified Repo-Level Toolchain Pin
 
 - Date: 2026-05-10
@@ -65,10 +86,31 @@ Replace `.nvmrc` and rely only on `.tool-versions`. That was rejected because th
 ### Notes
 This is a coordination file, not a runtime dependency. It should be updated whenever the repo intentionally changes its supported Node or Go version.
 
+## DEC-0015 - Split Workflow Lint And Security Scans Out Of The Delivery Workflow
+
+- Date: 2026-05-14
+- Status: accepted
+- Owners: both
+
+### Context
+The repository needed to reuse the same workflow lint and security checks already used in infra-platform, but the delivery workflow should stay focused on build and publication. The infra-platform pattern separates workflow lint from repository security scans, which fits this repo's multi-runtime layout better than keeping all checks in the publish path.
+
+### Decision
+Move workflow linting into `.github/workflows/workflow-lint.yml`. Move repository security scans into `.github/workflows/security-scans.yml` with `secrets`, `checkov`, and `trivy` jobs. Keep `.github/workflows/ci-web-docker.yml` focused on artifact publication.
+
+### Consequences
+Workflow validation and repository security scanning are now reusable standalone concerns instead of being staged inside the delivery workflow. The publish workflow becomes easier to reason about, while the repository still gets the same checks on the same GitHub-hosted runner class.
+
+### Alternatives considered
+Keep everything in `ci-web-docker`. That was rejected because it couples publish mechanics to repo hygiene checks and does not mirror the infra-platform split the campaign is trying to reuse.
+
+### Notes
+The old delivery-workflow staging decision is superseded by this split. `actionlint` remains GitHub-hosted, and `checkov` / `trivy` now scan the repository surface rather than an infra-only target.
+
 ## DEC-0012 - Add CI Lint And Security Checks To The Delivery Workflow With Staged Enablement
 
 - Date: 2026-05-09
-- Status: accepted
+- Status: superseded
 - Owners: both
 
 ### Context
@@ -78,13 +120,13 @@ The repository needed workflow linting in the CI pipeline and a place to stage s
 Add `actionlint` through `reviewdog` to `.github/workflows/ci-web-docker.yml` and keep `checkov` and `trivy` defined but disabled with `if: ${{ false }}` until the repo is ready to enable them.
 
 ### Consequences
-Workflow validation becomes part of the delivery CI instead of an ad hoc check. The security scanners are now documented in the pipeline definition, but they will not consume runtime until their temporary disablement is removed.
+Workflow validation became part of the delivery CI instead of an ad hoc check. The security scanners were documented in the pipeline definition, but they did not consume runtime until their temporary disablement was removed.
 
 ### Alternatives considered
-Create a separate CI workflow for the linting and scanner jobs. That was rejected because keeping them in the delivery workflow reduces workflow sprawl and keeps the checks adjacent to the release path.
+Create a separate CI workflow for the linting and scanner jobs. That was rejected at the time because keeping them in the delivery workflow reduced workflow sprawl and kept the checks adjacent to the release path.
 
 ### Notes
-The disabled jobs still carry the intended scanner configuration so enablement is a bounded workflow edit rather than a redesign.
+The staged-disabled jobs were later removed in favor of dedicated workflow lint and security scan workflows.
 
 ## DEC-0009 - Keep Infra-Platform Promotion Out Of The App Repository Workflow
 

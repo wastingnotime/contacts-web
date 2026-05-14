@@ -1,0 +1,33 @@
+name: workflow lint
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/**"
+
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/**"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v6.0.2
+
+      - name: lint workflows
+        uses: reviewdog/action-actionlint@v1.72.0
+        with:
+          github_token: ${{ github.token }}
+          reporter: github-pr-check
+          fail_level: error

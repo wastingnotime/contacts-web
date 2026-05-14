@@ -42,6 +42,7 @@ Interpretation:
 - production delivery is a packaging concern layered on top of the existing browser/BFF/backend split
 - the repository should not collapse the BFF back into the SPA container just to simplify publishing
 - the repository should hand off the production images through the checked-in publication manifest
+- CI stays on GitHub-hosted runners in this repository; any self-hosted execution belongs only to downstream deploy transport or cluster-adjacent runtime access if another repository explicitly requires it
 
 ## Discovery Scope
 
@@ -62,6 +63,7 @@ Excluded from this slice:
 - backend domain changes
 - auth/session implementation
 - observability implementation changes
+- self-hosted deployment transport ownership, which belongs with the deployment repo rather than this CI repository
 
 ## Why This Slice Next
 
