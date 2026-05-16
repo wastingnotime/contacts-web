@@ -146,7 +146,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     env:
-      GH_TOKEN: ${{ secrets.INTEGRATION_SANDBOX_REPO_TOKEN }}
+      GH_TOKEN: ${{ secrets.INTEGRATION_SANDBOX_DISPATCH_TOKEN }}
       TARGET_REPOSITORY: wastingnotime/integration-sandbox
       EVENT_TYPE: candidate-image-updated
       SPA_IMAGE_URI: ${{ needs.publish-spa-image.outputs.image_uri }}
