@@ -39,6 +39,27 @@ Any additional implementation guidance, migration note, or follow-up.
 
 Add entries as the repository evolves.
 
+## DEC-0016 - Introduce A Root Contracts Index For Public Browser Boundaries
+
+- Date: 2026-05-18
+- Status: accepted
+- Owners: both
+
+### Context
+The contract-boundary initiative called for a formal repository boundary interface for browser, BFF, auth, telemetry, navigation, and session contracts. The repository already exposed implementation-adjacent surfaces in `src/client/contracts/`, `src/shared/config/`, `src/shared/telemetry/`, `tests/contracts/`, and `work/publications/`, but it lacked a simple root index that told visitors where the public boundaries live.
+
+### Decision
+Introduce a root-level `contracts/` tree as the canonical public index for browser boundaries. Keep the existing source and test locations as the implementation-adjacent surfaces that realize those contracts.
+
+### Consequences
+Repository visitors now have a direct entrypoint for the public contract surface. The repo still needs to keep exported semantics explicit in docs and tests, and the root contracts tree must stay aligned with the implementation-adjacent surfaces it indexes.
+
+### Alternatives considered
+Leave the contract surface implicit in source and test paths only. That was rejected because it makes visitor navigation harder and keeps the repository boundary too hidden.
+
+### Notes
+The root contracts tree is an index and semantic boundary, not a duplicate implementation layer.
+
 ## DEC-0014 - Keep CI On GitHub-Hosted Runners And Push Any Self-Hosted Need To Deploy Transport
 
 - Date: 2026-05-14
