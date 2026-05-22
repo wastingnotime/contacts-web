@@ -7,6 +7,7 @@ import {
   createContactDraftFromViewModel,
   validateContactDraft,
 } from "../models/contact";
+import { logRuntimeEvent } from "../logging/runtimeLogs";
 
 export function EditContactPage(props) {
   const [draft, setDraft] = createSignal(createEmptyContactDraft());
@@ -59,8 +60,19 @@ export function EditContactPage(props) {
     setIsSubmitting(true);
     try {
       await props.apiClient.updateContact(props.contactId, currentDraft);
+      logRuntimeEvent("contact_update_success", {
+        path: `/edit/${props.contactId}`,
+        contactId: props.contactId,
+        runtimeMode: props.runtimeMode ?? "live",
+      });
       props.navigate("/");
     } catch (error) {
+      logRuntimeEvent("contact_update_failure", {
+        path: `/edit/${props.contactId}`,
+        contactId: props.contactId,
+        runtimeMode: props.runtimeMode ?? "live",
+        error: getContactErrorMessage(error, "Unable to update contact right now."),
+      });
       setFormError(getContactErrorMessage(error, "Unable to update contact right now."));
     } finally {
       setIsSubmitting(false);

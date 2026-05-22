@@ -3,6 +3,7 @@ import { createSignal, onCleanup, onMount } from "solid-js";
 import { ContactsListPage } from "./pages/ContactsListPage";
 import { CreateContactPage } from "./pages/CreateContactPage";
 import { EditContactPage } from "./pages/EditContactPage";
+import { logRuntimeEvent } from "./logging/runtimeLogs";
 
 function currentPath() {
   return window.location.pathname || "/";
@@ -65,10 +66,19 @@ export function App(props) {
     const nextPath = currentPath();
     setPath(nextPath);
     recordRouteTelemetry(nextPath);
+    logRuntimeEvent("route_change", {
+      path: nextPath,
+      runtimeMode: props.runtimeMode ?? "live",
+    });
   };
 
   onMount(() => {
     window.addEventListener("popstate", handlePopState);
+    logRuntimeEvent("spa_boot", {
+      path: path(),
+      route: routeFromPath(path()).name,
+      runtimeMode: props.runtimeMode ?? "live",
+    });
   });
 
   onCleanup(() => {
@@ -82,6 +92,10 @@ export function App(props) {
     window.history.pushState({}, "", nextPath);
     setPath(nextPath);
     recordRouteTelemetry(nextPath);
+    logRuntimeEvent("route_change", {
+      path: nextPath,
+      runtimeMode: props.runtimeMode ?? "live",
+    });
   };
 
   const route = () => routeFromPath(path());

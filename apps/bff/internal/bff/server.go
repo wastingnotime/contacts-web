@@ -7,11 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -58,6 +60,13 @@ func (s *Server) serveHTTP(response http.ResponseWriter, request *http.Request) 
 		apiPath = "/"
 	}
 
+	startedAt := time.Now()
+	statusCode := http.StatusOK
+	var requestErr error
+	defer func() {
+		logRequestSummary(request.Method, path, statusCode, time.Since(startedAt), requestErr)
+	}()
+
 	browserTelemetryContext := ReadTelemetryContextFromHeaders(request.Header)
 	parentContext := propagation.TraceContext{}.Extract(request.Context(), propagation.HeaderCarrier(request.Header))
 	_, span := s.observability.Tracer().Start(
@@ -79,55 +88,73 @@ func (s *Server) serveHTTP(response http.ResponseWriter, request *http.Request) 
 
 	switch {
 	case request.Method == http.MethodGet && apiPath == "/healthz":
+		statusCode = http.StatusOK
 		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusOK))
 		writeJSON(response, http.StatusOK, map[string]string{"status": "ok"})
 	case request.Method == http.MethodPost && apiPath == "/telemetry":
-		s.handleTelemetry(response, request, browserTelemetryContext, span)
+		var telemetryErr error
+		statusCode, telemetryErr = s.handleTelemetry(response, request, browserTelemetryContext, span)
+		requestErr = telemetryErr
 	case request.Method == http.MethodGet && apiPath == "/contacts":
 		contacts, err := s.client.ListContacts(bffTelemetryContext)
 		if err != nil {
+			requestErr = err
+			statusCode = StatusCodeForError(err)
 			s.recordRequestFailure(span, err)
 			respondWithError(response, err, "Unable to load contacts.")
 			return
 		}
+		statusCode = http.StatusOK
 		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusOK))
 		writeJSON(response, http.StatusOK, contacts)
 	case request.Method == http.MethodPost && apiPath == "/contacts":
 		var draft ContactDraft
 		if err := decodeRequestJSON(request.Body, &draft); err != nil {
 			apiErr := NewAPIError("The contact data is invalid.", "validation")
+			requestErr = apiErr
+			statusCode = StatusCodeForError(apiErr)
 			s.recordRequestFailure(span, apiErr)
 			respondWithError(response, apiErr, "Unable to create contact.")
 			return
 		}
 		contact, err := s.client.CreateContact(draft, bffTelemetryContext)
 		if err != nil {
+			requestErr = err
+			statusCode = StatusCodeForError(err)
 			s.recordRequestFailure(span, err)
 			respondWithError(response, err, "Unable to create contact.")
 			return
 		}
+		statusCode = http.StatusCreated
 		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusCreated))
 		writeJSON(response, http.StatusCreated, contact)
 	case request.Method == http.MethodGet && strings.HasPrefix(apiPath, "/contacts/"):
 		contactID, err := decodeContactID(apiPath)
 		if err != nil {
 			apiErr := NewAPIError("The contact data is invalid.", "validation")
+			requestErr = apiErr
+			statusCode = StatusCodeForError(apiErr)
 			s.recordRequestFailure(span, apiErr)
 			respondWithError(response, apiErr, "Unable to load contact.")
 			return
 		}
 		contact, err := s.client.GetContact(contactID, bffTelemetryContext)
 		if err != nil {
+			requestErr = err
+			statusCode = StatusCodeForError(err)
 			s.recordRequestFailure(span, err)
 			respondWithError(response, err, "Unable to load contact.")
 			return
 		}
+		statusCode = http.StatusOK
 		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusOK))
 		writeJSON(response, http.StatusOK, contact)
 	case request.Method == http.MethodPut && strings.HasPrefix(apiPath, "/contacts/"):
 		contactID, err := decodeContactID(apiPath)
 		if err != nil {
 			apiErr := NewAPIError("The contact data is invalid.", "validation")
+			requestErr = apiErr
+			statusCode = StatusCodeForError(apiErr)
 			s.recordRequestFailure(span, apiErr)
 			respondWithError(response, apiErr, "Unable to update contact.")
 			return
@@ -135,55 +162,68 @@ func (s *Server) serveHTTP(response http.ResponseWriter, request *http.Request) 
 		var draft ContactDraft
 		if err := decodeRequestJSON(request.Body, &draft); err != nil {
 			apiErr := NewAPIError("The contact data is invalid.", "validation")
+			requestErr = apiErr
+			statusCode = StatusCodeForError(apiErr)
 			s.recordRequestFailure(span, apiErr)
 			respondWithError(response, apiErr, "Unable to update contact.")
 			return
 		}
 		contact, err := s.client.UpdateContact(contactID, draft, bffTelemetryContext)
 		if err != nil {
+			requestErr = err
+			statusCode = StatusCodeForError(err)
 			s.recordRequestFailure(span, err)
 			respondWithError(response, err, "Unable to update contact.")
 			return
 		}
+		statusCode = http.StatusOK
 		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusOK))
 		writeJSON(response, http.StatusOK, contact)
 	case request.Method == http.MethodDelete && strings.HasPrefix(apiPath, "/contacts/"):
 		contactID, err := decodeContactID(apiPath)
 		if err != nil {
 			apiErr := NewAPIError("The contact data is invalid.", "validation")
+			requestErr = apiErr
+			statusCode = StatusCodeForError(apiErr)
 			s.recordRequestFailure(span, apiErr)
 			respondWithError(response, apiErr, "Unable to delete contact.")
 			return
 		}
 		if err := s.client.DeleteContact(contactID, bffTelemetryContext); err != nil {
+			requestErr = err
+			statusCode = StatusCodeForError(err)
 			s.recordRequestFailure(span, err)
 			respondWithError(response, err, "Unable to delete contact.")
 			return
 		}
+		statusCode = http.StatusNoContent
 		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusNoContent))
 		response.WriteHeader(http.StatusNoContent)
 	default:
+		statusCode = http.StatusNotFound
 		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusNotFound))
 		writeJSON(response, http.StatusNotFound, map[string]string{"message": "Not found."})
 	}
 }
 
-func (s *Server) handleTelemetry(response http.ResponseWriter, request *http.Request, context TelemetryContext, span oteltrace.Span) {
+func (s *Server) handleTelemetry(response http.ResponseWriter, request *http.Request, context TelemetryContext, span oteltrace.Span) (int, error) {
 	defer request.Body.Close()
 
 	var submission map[string]any
 	rawBody, err := io.ReadAll(request.Body)
 	if err != nil {
-		respondWithError(response, NewAPIError("The contact data is invalid.", "validation"), "Unable to process request.")
-		return
+		apiErr := NewAPIError("The contact data is invalid.", "validation")
+		respondWithError(response, apiErr, "Unable to process request.")
+		return StatusCodeForError(apiErr), apiErr
 	}
 	submission = map[string]any{}
 	if len(bytes.TrimSpace(rawBody)) > 0 {
 		decoder := json.NewDecoder(bytes.NewReader(rawBody))
 		decoder.UseNumber()
 		if err := decoder.Decode(&submission); err != nil {
-			respondWithError(response, NewAPIError("The contact data is invalid.", "validation"), "Unable to process request.")
-			return
+			apiErr := NewAPIError("The contact data is invalid.", "validation")
+			respondWithError(response, apiErr, "Unable to process request.")
+			return StatusCodeForError(apiErr), apiErr
 		}
 	}
 
@@ -233,6 +273,7 @@ func (s *Server) handleTelemetry(response http.ResponseWriter, request *http.Req
 		"accepted":  true,
 		"telemetry": telemetry,
 	})
+	return http.StatusAccepted, nil
 }
 
 func (s *Server) recordRequestFailure(span oteltrace.Span, err error) {
@@ -284,6 +325,15 @@ func writeJSON(response http.ResponseWriter, statusCode int, payload any) {
 	_ = encoder.Encode(payload)
 }
 
+func logRequestSummary(method, path string, statusCode int, duration time.Duration, err error) {
+	if err != nil {
+		log.Printf("contacts-web bff request method=%s path=%s status=%d duration=%s error=%q", method, path, statusCode, duration.String(), err.Error())
+		return
+	}
+
+	log.Printf("contacts-web bff request method=%s path=%s status=%d duration=%s", method, path, statusCode, duration.String())
+}
+
 type Runtime struct {
 	server        *http.Server
 	listener      net.Listener
@@ -333,6 +383,8 @@ func StartRuntime(config RuntimeConfig, dependencies Dependencies) (*Runtime, er
 		_ = server.Serve(listener)
 	}()
 
+	log.Printf("contacts-web bff listening on %s", runtime.BaseURL)
+
 	return runtime, nil
 }
 
@@ -346,9 +398,11 @@ func (r *Runtime) Shutdown(ctx context.Context) error {
 	}
 
 	if r.observability != nil {
+		log.Println("contacts-web bff shutting down")
 		return r.observability.Shutdown()
 	}
 
+	log.Println("contacts-web bff shutting down")
 	return nil
 }
 

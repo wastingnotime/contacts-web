@@ -1,6 +1,7 @@
 import { For, Show, createResource, createSignal } from "solid-js";
 
 import { getContactErrorMessage } from "../contracts/contactErrors";
+import { logRuntimeEvent } from "../logging/runtimeLogs";
 
 function ContactListItem(props) {
   return (
@@ -70,8 +71,23 @@ export function ContactsListPage(props) {
     setDeletingContactId(contactId);
     try {
       await props.apiClient.deleteContact(contactId);
+      logRuntimeEvent("contact_delete_success", {
+        path: "/",
+        contactId,
+        runtimeMode: props.runtimeMode ?? "live",
+      });
       await refetch();
     } catch (error) {
+      const errorMessage =
+        error && typeof error === "object" && "message" in error && error.message
+          ? error.message
+          : "Unable to delete contact right now.";
+      logRuntimeEvent("contact_delete_failure", {
+        path: "/",
+        contactId,
+        runtimeMode: props.runtimeMode ?? "live",
+        error: errorMessage,
+      });
       if (error && typeof error === "object" && "message" in error && error.message) {
         setDeleteError(error.message);
       } else {

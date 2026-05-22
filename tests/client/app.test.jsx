@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@solidjs/testing-library";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@solidjs/testing-library";
 
 import { App } from "../../src/client/App";
 import { createContactsApiClient } from "../../src/client/api/createContactsApiClient";
@@ -189,6 +189,124 @@ describe("App", () => {
         },
       });
     });
+  });
+
+  it("logs SPA boot and route changes", async () => {
+    const consoleSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+    try {
+      const apiClient = createStubApiClient();
+
+      mountApp(apiClient, "/");
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          "[contacts-web spa]",
+          expect.objectContaining({
+            eventName: "spa_boot",
+            path: "/",
+            runtimeMode: "live",
+          }),
+        );
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Add first contact" }));
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          "[contacts-web spa]",
+          expect.objectContaining({
+            eventName: "route_change",
+            path: "/new",
+            runtimeMode: "live",
+          }),
+        );
+      });
+    } finally {
+      consoleSpy.mockRestore();
+    }
+  });
+
+  it("logs create, update, and delete outcomes from the page views", async () => {
+    const consoleSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+    try {
+      const createApiClient = createStubApiClient();
+      mountApp(createApiClient, "/new");
+
+      fireEvent.input(screen.getByRole("textbox", { name: /first name/i }), {
+        target: { value: "Grace" },
+      });
+      fireEvent.input(screen.getByRole("textbox", { name: /last name/i }), {
+        target: { value: "Hopper" },
+      });
+      fireEvent.input(screen.getByRole("textbox", { name: /phone number/i }), {
+        target: { value: "555-0100" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save contact" }));
+
+      await screen.findByRole("heading", { name: "Contacts list" });
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "[contacts-web spa]",
+        expect.objectContaining({
+          eventName: "contact_create_success",
+          path: "/new",
+        }),
+      );
+      cleanup();
+
+      const updateApiClient = createStubApiClient([
+        {
+          id: "contact-1",
+          firstName: "Ada",
+          lastName: "Lovelace",
+          phoneNumber: "555-0001",
+        },
+      ]);
+      mountApp(updateApiClient, "/edit/contact-1");
+
+      await screen.findByRole("heading", { name: "Edit contact" });
+      await screen.findByRole("textbox", { name: /last name/i });
+      fireEvent.input(screen.getByRole("textbox", { name: /last name/i }), {
+        target: { value: "Byron" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+      await screen.findByRole("heading", { name: "Contacts list" });
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "[contacts-web spa]",
+        expect.objectContaining({
+          eventName: "contact_update_success",
+          path: "/edit/contact-1",
+          contactId: "contact-1",
+        }),
+      );
+      cleanup();
+
+      const deleteApiClient = createStubApiClient([
+        {
+          id: "contact-1",
+          firstName: "Ada",
+          lastName: "Byron",
+          phoneNumber: "555-0001",
+        },
+      ]);
+      mountApp(deleteApiClient, "/");
+
+      await screen.findByText("Ada Byron");
+      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+      fireEvent.click(screen.getByRole("button", { name: "Confirm delete" }));
+
+      await screen.findByText("No contacts yet");
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "[contacts-web spa]",
+        expect.objectContaining({
+          eventName: "contact_delete_success",
+          path: "/",
+          contactId: "contact-1",
+        }),
+      );
+    } finally {
+      consoleSpy.mockRestore();
+    }
   });
 
   it("validates required fields before creating a contact", async () => {
