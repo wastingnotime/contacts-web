@@ -4,14 +4,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"sync"
 	"testing"
 
+	"go.opentelemetry.io/contrib/bridges/otelslog"
+	"go.opentelemetry.io/otel/attribute"
+	otelog "go.opentelemetry.io/otel/log"
+	sdklog "go.opentelemetry.io/otel/sdk/log"
+	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type fakeBackendGateway struct {
@@ -65,6 +69,11 @@ type recordingSpanExporter struct {
 	spans []recordedSpan
 }
 
+type recordingLogExporter struct {
+	mu      sync.Mutex
+	records []sdklog.Record
+}
+
 func (e *recordingSpanExporter) ExportSpans(_ context.Context, spans []sdktrace.ReadOnlySpan) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -84,6 +93,60 @@ func (e *recordingSpanExporter) ExportSpans(_ context.Context, spans []sdktrace.
 
 func (e *recordingSpanExporter) Shutdown(context.Context) error {
 	return nil
+}
+
+func (e *recordingLogExporter) Export(_ context.Context, records []sdklog.Record) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	for _, record := range records {
+		e.records = append(e.records, record.Clone())
+	}
+
+	return nil
+}
+
+func (e *recordingLogExporter) Shutdown(context.Context) error {
+	return nil
+}
+
+func (e *recordingLogExporter) ForceFlush(context.Context) error {
+	return nil
+}
+
+func newTestLogObservability(t *testing.T, exporter sdklog.Exporter) *RuntimeObservability {
+	t.Helper()
+
+	resource, err := sdkresource.New(context.Background(),
+		sdkresource.WithAttributes(
+			attribute.String("service.name", defaultTelemetryBffName),
+			attribute.String("service.version", defaultTelemetryAppVersion),
+			attribute.String("deployment.environment", defaultTelemetryEnvironment),
+		),
+	)
+	if err != nil {
+		t.Fatalf("failed to create log resource: %v", err)
+	}
+
+	provider := sdklog.NewLoggerProvider(
+		sdklog.WithResource(resource),
+		sdklog.WithProcessor(sdklog.NewSimpleProcessor(exporter)),
+	)
+
+	t.Cleanup(func() {
+		_ = provider.Shutdown(context.Background())
+	})
+
+	return &RuntimeObservability{
+		tracer: trace.NewNoopTracerProvider().Tracer(defaultTelemetryBffName),
+		logger: otelslog.NewLogger(
+			defaultTelemetryBffName,
+			otelslog.WithLoggerProvider(provider),
+		),
+		shutdown: func() error {
+			return provider.Shutdown(context.Background())
+		},
+	}
 }
 
 func TestServerRoutesThroughBffBoundary(t *testing.T) {
@@ -227,25 +290,19 @@ func TestServerRoutesThroughBffBoundary(t *testing.T) {
 	}
 }
 
-func TestServerLogsRequestSummaries(t *testing.T) {
+func TestServerExportsRequestSummariesAsOpenTelemetryLogs(t *testing.T) {
 	backend := fakeBackendGateway{
 		listContactsFn: func(context TelemetryContext) ([]ContactTransport, error) {
 			return []ContactTransport{}, nil
 		},
 	}
 
-	originalWriter := log.Writer()
-	originalFlags := log.Flags()
-	var logBuffer bytes.Buffer
-	log.SetOutput(&logBuffer)
-	log.SetFlags(0)
-	t.Cleanup(func() {
-		log.SetOutput(originalWriter)
-		log.SetFlags(originalFlags)
-	})
+	exporter := &recordingLogExporter{}
+	observability := newTestLogObservability(t, exporter)
 
 	server := httptest.NewServer(NewServer(Dependencies{
 		BackendGateway: backend,
+		Observability:  observability,
 	}).Handler())
 	defer server.Close()
 
@@ -264,8 +321,92 @@ func TestServerLogsRequestSummaries(t *testing.T) {
 		t.Fatalf("expected list response, got %d", response.StatusCode)
 	}
 
-	if !strings.Contains(logBuffer.String(), "contacts-web bff request method=GET path=/api/contacts status=200") {
-		t.Fatalf("expected request summary log, got %q", logBuffer.String())
+	if len(exporter.records) != 1 {
+		t.Fatalf("expected one exported log record, got %d", len(exporter.records))
+	}
+
+	record := exporter.records[0]
+	if record.Body().AsString() != "contacts-web bff request" {
+		t.Fatalf("unexpected log body: %q", record.Body().AsString())
+	}
+	if record.Resource() == nil {
+		t.Fatalf("expected log resource metadata")
+	}
+
+	resourceAttrs := map[string]string{}
+	for _, kv := range record.Resource().Attributes() {
+		resourceAttrs[string(kv.Key)] = kv.Value.AsString()
+	}
+	if resourceAttrs["service.name"] != "contacts-bff" {
+		t.Fatalf("expected BFF service name in log resource, got %#v", resourceAttrs)
+	}
+
+	attrs := map[string]otelog.Value{}
+	record.WalkAttributes(func(kv otelog.KeyValue) bool {
+		attrs[string(kv.Key)] = kv.Value
+		return true
+	})
+
+	if attrs["method"].AsString() != "GET" {
+		t.Fatalf("expected log method attribute, got %#v", attrs)
+	}
+	if attrs["path"].AsString() != "/api/contacts" {
+		t.Fatalf("expected log path attribute, got %#v", attrs)
+	}
+	if attrs["status"].AsInt64() != 200 {
+		t.Fatalf("expected log status attribute, got %#v", attrs)
+	}
+	if attrs["duration_ms"].Empty() {
+		t.Fatalf("expected log duration attribute, got %#v", attrs)
+	}
+}
+
+func TestRuntimeObservabilityExportsLogsToOtlpHttpCollector(t *testing.T) {
+	var (
+		mu     sync.Mutex
+		paths  []string
+		events []string
+	)
+
+	collector := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		mu.Lock()
+		defer mu.Unlock()
+
+		paths = append(paths, request.URL.Path)
+		events = append(events, request.Header.Get("Content-Type"))
+		response.WriteHeader(http.StatusAccepted)
+	}))
+	defer collector.Close()
+
+	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", collector.URL)
+
+	observability, err := newRuntimeObservabilityFromEnv()
+	if err != nil {
+		t.Fatalf("failed to build runtime observability: %v", err)
+	}
+
+	observability.Logger().Info("contacts-web bff request",
+		"method", "GET",
+		"path", "/api/contacts",
+		"status", 200,
+		"duration_ms", 1,
+	)
+
+	if err := observability.Shutdown(); err != nil {
+		t.Fatalf("failed to shut down runtime observability: %v", err)
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	if len(paths) == 0 {
+		t.Fatalf("expected collector to receive at least one otlp request")
+	}
+	if paths[0] != "/v1/logs" {
+		t.Fatalf("expected otlp logs endpoint, got %q", paths[0])
+	}
+	if len(events) == 0 || events[0] != "application/x-protobuf" {
+		t.Fatalf("expected otlp protobuf content type, got %#v", events)
 	}
 }
 

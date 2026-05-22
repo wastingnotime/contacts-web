@@ -9,6 +9,7 @@ The BFF contract defines how the browser talks to the backend through the web bo
 - the HTTP client sends `Accept: application/json` on browser-facing requests
 - JSON submissions add `Content-Type: application/json`
 - telemetry headers travel with browser requests
+- BFF runtime summaries can be emitted as OTLP logs through the shared collector when observability is configured
 - `GET /contacts` loads the list
 - `GET /contacts/:id` loads a single contact
 - `POST /contacts` creates a contact

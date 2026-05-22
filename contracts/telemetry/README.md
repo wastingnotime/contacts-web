@@ -9,6 +9,7 @@ The telemetry contract defines what the browser reports about interaction, routi
 - bootstrap records an initial `page_view`
 - route changes record `route_change`
 - telemetry events can be posted through the BFF endpoint at `/telemetry`
+- BFF runtime logs can be exported as OTLP logs through the shared collector when observability is enabled
 - telemetry should describe the user-visible runtime, not hidden component mechanics
 
 ## Current Repository Surfaces

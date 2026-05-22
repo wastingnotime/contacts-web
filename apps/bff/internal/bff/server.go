@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -63,8 +63,9 @@ func (s *Server) serveHTTP(response http.ResponseWriter, request *http.Request) 
 	startedAt := time.Now()
 	statusCode := http.StatusOK
 	var requestErr error
+	logger := s.observability.Logger()
 	defer func() {
-		logRequestSummary(request.Method, path, statusCode, time.Since(startedAt), requestErr)
+		logRequestSummary(logger, request.Method, path, statusCode, time.Since(startedAt), requestErr)
 	}()
 
 	browserTelemetryContext := ReadTelemetryContextFromHeaders(request.Header)
@@ -325,13 +326,24 @@ func writeJSON(response http.ResponseWriter, statusCode int, payload any) {
 	_ = encoder.Encode(payload)
 }
 
-func logRequestSummary(method, path string, statusCode int, duration time.Duration, err error) {
+func logRequestSummary(logger *slog.Logger, method, path string, statusCode int, duration time.Duration, err error) {
 	if err != nil {
-		log.Printf("contacts-web bff request method=%s path=%s status=%d duration=%s error=%q", method, path, statusCode, duration.String(), err.Error())
+		logger.Info("contacts-web bff request",
+			"method", method,
+			"path", path,
+			"status", statusCode,
+			"duration_ms", duration.Milliseconds(),
+			"error", err.Error(),
+		)
 		return
 	}
 
-	log.Printf("contacts-web bff request method=%s path=%s status=%d duration=%s", method, path, statusCode, duration.String())
+	logger.Info("contacts-web bff request",
+		"method", method,
+		"path", path,
+		"status", statusCode,
+		"duration_ms", duration.Milliseconds(),
+	)
 }
 
 type Runtime struct {
@@ -383,7 +395,11 @@ func StartRuntime(config RuntimeConfig, dependencies Dependencies) (*Runtime, er
 		_ = server.Serve(listener)
 	}()
 
-	log.Printf("contacts-web bff listening on %s", runtime.BaseURL)
+	runtimeLogger := noopRuntimeLogger
+	if dependencies.Observability != nil {
+		runtimeLogger = dependencies.Observability.Logger()
+	}
+	runtimeLogger.Info("contacts-web bff listening", "base_url", runtime.BaseURL)
 
 	return runtime, nil
 }
@@ -398,11 +414,10 @@ func (r *Runtime) Shutdown(ctx context.Context) error {
 	}
 
 	if r.observability != nil {
-		log.Println("contacts-web bff shutting down")
+		r.observability.Logger().Info("contacts-web bff shutting down")
 		return r.observability.Shutdown()
 	}
 
-	log.Println("contacts-web bff shutting down")
 	return nil
 }
 

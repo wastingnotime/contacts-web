@@ -1,6 +1,10 @@
 package bff
 
-import "go.opentelemetry.io/otel/trace"
+import (
+	"log/slog"
+
+	"go.opentelemetry.io/otel/trace"
+)
 
 type ContactViewModel struct {
 	ID          string `json:"id"`
@@ -89,5 +93,6 @@ type Dependencies struct {
 
 type RuntimeObservability struct {
 	tracer   trace.Tracer
+	logger   *slog.Logger
 	shutdown func() error
 }
