@@ -3,6 +3,7 @@ import { Show, createSignal } from "solid-js";
 import { ContactFormFields } from "../components/ContactFormFields";
 import { getContactErrorMessage } from "../contracts/contactErrors";
 import { createEmptyContactDraft, validateContactDraft } from "../models/contact";
+import { logRuntimeEvent } from "../logging/runtimeLogs";
 
 export function CreateContactPage(props) {
   const [draft, setDraft] = createSignal(createEmptyContactDraft());
@@ -29,8 +30,17 @@ export function CreateContactPage(props) {
     setIsSubmitting(true);
     try {
       await props.apiClient.createContact(currentDraft);
+      logRuntimeEvent("contact_create_success", {
+        path: "/new",
+        runtimeMode: props.runtimeMode ?? "live",
+      });
       props.navigate("/");
     } catch (error) {
+      logRuntimeEvent("contact_create_failure", {
+        path: "/new",
+        runtimeMode: props.runtimeMode ?? "live",
+        error: getContactErrorMessage(error, "Unable to save contact right now."),
+      });
       setFormError(getContactErrorMessage(error, "Unable to save contact right now."));
     } finally {
       setIsSubmitting(false);

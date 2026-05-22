@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 
@@ -222,6 +224,48 @@ func TestServerRoutesThroughBffBoundary(t *testing.T) {
 	deleteResponse := mustDoRequest(t, server, http.MethodDelete, "/api/contacts/contact-1", nil, telemetryContext)
 	if deleteResponse.StatusCode != http.StatusNoContent {
 		t.Fatalf("expected delete response, got %d", deleteResponse.StatusCode)
+	}
+}
+
+func TestServerLogsRequestSummaries(t *testing.T) {
+	backend := fakeBackendGateway{
+		listContactsFn: func(context TelemetryContext) ([]ContactTransport, error) {
+			return []ContactTransport{}, nil
+		},
+	}
+
+	originalWriter := log.Writer()
+	originalFlags := log.Flags()
+	var logBuffer bytes.Buffer
+	log.SetOutput(&logBuffer)
+	log.SetFlags(0)
+	t.Cleanup(func() {
+		log.SetOutput(originalWriter)
+		log.SetFlags(originalFlags)
+	})
+
+	server := httptest.NewServer(NewServer(Dependencies{
+		BackendGateway: backend,
+	}).Handler())
+	defer server.Close()
+
+	telemetryContext := map[string]string{
+		"traceparent":             "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01",
+		"x-contacts-trace-id":     "0123456789abcdef0123456789abcdef",
+		"x-contacts-service-name": "contacts-spa",
+		"x-contacts-feature-name": "contacts-web",
+		"x-contacts-journey-name": "contacts-web-journey",
+		"x-contacts-app-version":  "2026.04.22",
+		"x-contacts-environment":  "test",
+	}
+
+	response := mustDoRequest(t, server, http.MethodGet, "/api/contacts", nil, telemetryContext)
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("expected list response, got %d", response.StatusCode)
+	}
+
+	if !strings.Contains(logBuffer.String(), "contacts-web bff request method=GET path=/api/contacts status=200") {
+		t.Fatalf("expected request summary log, got %q", logBuffer.String())
 	}
 }
 
