@@ -1,4 +1,4 @@
-# Finding: OTLP Logs Are Still Not Exported In The BFF Telemetry Path
+# Finding: OTLP Logs Are Exported In The BFF Telemetry Path
 
 ## Context
 
@@ -8,13 +8,15 @@ The issue requests that BFF logs be exported as OTLP logs through the shared col
 
 ## Observed Behavior
 
-The repository currently has:
+The repository now has:
 
 - an observability slice that treats traces, metrics, and logs as distinct
 - BFF OTLP trace export wiring
-- BFF metrics-related OpenTelemetry dependencies and follow-up notes
+- BFF OTLP log export wiring through the shared collector
+- a BFF runtime logger bridged to OpenTelemetry logs
+- tests that verify request summaries are exported as log records and reach the OTLP `/v1/logs` endpoint
 
-The repository does not currently show a BFF log exporter or OTLP log pipeline in the BFF observability code.
+The BFF observability code now initializes a log exporter and logger provider when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, and the runtime request summaries flow through that logger.
 
 ## Expected Behavior
 
@@ -22,13 +24,11 @@ The BFF should expose an explicit OTLP log export or log bridging path through t
 
 ## Impact
 
-The current observability boundary remains incomplete for the three-signal posture described in the issue.
-
-That leaves the repo without a confirmed implementation for log export as a first-class telemetry signal alongside traces and metrics.
+The repository now satisfies the three-signal posture described in the issue for the BFF runtime path.
 
 ## Suspected Source
 
-The missing behavior appears to be in the `contacts-web` BFF observability layer.
+The behavior lives in the `contacts-web` BFF observability layer.
 
 ## Evidence
 
@@ -44,4 +44,4 @@ The missing behavior appears to be in the `contacts-web` BFF observability layer
 
 ## Local Impact
 
-The repository should treat issue `#16` as unresolved until the BFF log export path is implemented and documented.
+The repository can treat issue `#16` as implemented once the code and tests on the BFF path are accepted.
