@@ -155,8 +155,6 @@ jobs:
     steps:
       - name: dispatch integration sandbox repository event
         run: |
-          candidate_image="${SPA_IMAGE_URI%:*}"
-
           gh api "repos/${TARGET_REPOSITORY}/dispatches" \
             -X POST \
             --input - <<EOF
@@ -164,7 +162,7 @@ jobs:
             "event_type": "${EVENT_TYPE}",
             "client_payload": {
               "service": "contacts-web",
-              "image": "${candidate_image}",
+              "image": "${SPA_IMAGE_URI}",
               "sha": "${GITHUB_SHA}"
             }
           }
