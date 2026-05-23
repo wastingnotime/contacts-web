@@ -16,8 +16,7 @@ describe("ci-web-docker workflow", () => {
     expect(workflow).toContain("repos/${TARGET_REPOSITORY}/dispatches");
     expect(workflow).toContain("EVENT_TYPE: candidate-image-updated");
     expect(workflow).toContain('"service": "contacts-web"');
-    expect(workflow).toContain('candidate_image="${SPA_IMAGE_URI%:*}"');
-    expect(workflow).toContain('"image": "${candidate_image}"');
+    expect(workflow).toContain('"image": "${SPA_IMAGE_URI}"');
     expect(workflow).toContain('"sha": "${GITHUB_SHA}"');
     expect(workflow).not.toContain("wastingnotime/infra-platform");
     expect(workflow).not.toContain("gh pr create");
