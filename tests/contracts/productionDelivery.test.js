@@ -17,6 +17,8 @@ describe("contacts web production delivery artifacts", () => {
 
     expect(spaDockerfile).toContain("nginx:1.27-alpine");
     expect(spaDockerfile).toContain("EXPOSE 80");
+    expect(spaDockerfile).toContain("HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3");
+    expect(spaDockerfile).toContain("http://127.0.0.1/health/ready");
     expect(nginxConfig).toContain("location = /health/live");
     expect(nginxConfig).toContain("location = /health/ready");
     expect(nginxConfig).toContain(`return 200 '{"status":"alive"}';`);
@@ -27,6 +29,8 @@ describe("contacts web production delivery artifacts", () => {
     expect(bffDockerfile).toContain("ENV CONTACTS_WEB_BFF_HOST=0.0.0.0");
     expect(bffDockerfile).toContain("ENV CONTACTS_WEB_BFF_PORT=4010");
     expect(bffDockerfile).toContain("EXPOSE 4010");
+    expect(bffDockerfile).toContain("HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3");
+    expect(bffDockerfile).toContain("http://127.0.0.1:4010/api/health/ready");
     expect(bffDockerfile).toContain('ENTRYPOINT ["./contacts-web-bff"]');
   });
 });

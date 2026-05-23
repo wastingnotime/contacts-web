@@ -23,4 +23,7 @@ USER contacts-web-bff
 
 EXPOSE 4010
 
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -q -O /dev/null http://127.0.0.1:4010/api/health/ready || exit 1
+
 ENTRYPOINT ["./contacts-web-bff"]
