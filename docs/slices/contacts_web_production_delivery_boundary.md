@@ -140,6 +140,8 @@ Failure conditions:
 - the BFF should be publishable as a Swarm-compatible image for Traefik ingress
 - the SPA should remain a portable static container artifact
 - the browser should keep using relative `/api` paths in production
+- the SPA runtime should expose `/health/live` and `/health/ready` at the container root
+- the BFF runtime should expose `/api/health/live` and `/api/health/ready`, with readiness depending on the backend dependency it truly needs
 - production packaging must not redefine backend domain ownership
 
 ## Required Ports
@@ -149,6 +151,8 @@ Failure conditions:
 - checked-in publication manifest
 - production port binding for the BFF
 - relative `/api` browser routing
+- root health checks for the SPA container
+- browser-facing `/api/health/live` and `/api/health/ready` on the BFF
 - repository decision record for production artifact delivery
 
 ## Interface Expectations

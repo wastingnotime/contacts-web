@@ -94,6 +94,14 @@ func (c *ContactsWebBffClient) DeleteContact(contactID string, context Telemetry
 	return nil
 }
 
+func (c *ContactsWebBffClient) HealthCheck(context TelemetryContext) error {
+	if err := c.backendGateway.HealthCheck(context); err != nil {
+		return normalizeBffError(err, "Unable to check backend health.")
+	}
+
+	return nil
+}
+
 func normalizeBffError(err error, fallbackMessage string) error {
 	if err == nil {
 		return nil

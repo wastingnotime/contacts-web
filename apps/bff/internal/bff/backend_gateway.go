@@ -13,6 +13,7 @@ type ContactsBackendGateway interface {
 	GetContact(contactID string, context TelemetryContext) (ContactTransport, error)
 	UpdateContact(contactID string, payload UpdateContactPayload, context TelemetryContext) (ContactTransport, error)
 	DeleteContact(contactID string, context TelemetryContext) error
+	HealthCheck(context TelemetryContext) error
 }
 
 type HTTPContactsBackendGateway struct {
@@ -170,6 +171,20 @@ func (g *HTTPContactsBackendGateway) DeleteContact(contactID string, context Tel
 
 	if response.StatusCode/100 != 2 {
 		return mapResponseToAPIError(response.StatusCode, "Unable to delete contact.")
+	}
+
+	return nil
+}
+
+func (g *HTTPContactsBackendGateway) HealthCheck(context TelemetryContext) error {
+	response, err := g.doRequest(http.MethodGet, "/healthz", nil, false, context)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode/100 != 2 {
+		return NewAPIError("Unable to check backend health.", "unknown")
 	}
 
 	return nil

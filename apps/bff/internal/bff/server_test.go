@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -24,6 +25,7 @@ type fakeBackendGateway struct {
 	getContactFn    func(contactID string, context TelemetryContext) (ContactTransport, error)
 	updateContactFn func(contactID string, payload UpdateContactPayload, context TelemetryContext) (ContactTransport, error)
 	deleteContactFn func(contactID string, context TelemetryContext) error
+	healthCheckFn   func(context TelemetryContext) error
 }
 
 func (f fakeBackendGateway) ListContacts(context TelemetryContext) ([]ContactTransport, error) {
@@ -44,6 +46,14 @@ func (f fakeBackendGateway) UpdateContact(contactID string, payload UpdateContac
 
 func (f fakeBackendGateway) DeleteContact(contactID string, context TelemetryContext) error {
 	return f.deleteContactFn(contactID, context)
+}
+
+func (f fakeBackendGateway) HealthCheck(context TelemetryContext) error {
+	if f.healthCheckFn == nil {
+		return nil
+	}
+
+	return f.healthCheckFn(context)
 }
 
 type recordingTelemetryCollector struct {
@@ -226,9 +236,19 @@ func TestServerRoutesThroughBffBoundary(t *testing.T) {
 		"x-contacts-environment":  "test",
 	}
 
-	healthzResponse := mustDoRequest(t, server, http.MethodGet, "/api/healthz", nil, telemetryContext)
-	if healthzResponse.StatusCode != http.StatusOK {
-		t.Fatalf("expected healthz success, got %d", healthzResponse.StatusCode)
+	liveResponse := mustDoRequest(t, server, http.MethodGet, "/api/health/live", nil, telemetryContext)
+	if liveResponse.StatusCode != http.StatusOK {
+		t.Fatalf("expected live health success, got %d", liveResponse.StatusCode)
+	}
+
+	readyResponse := mustDoRequest(t, server, http.MethodGet, "/api/health/ready", nil, telemetryContext)
+	if readyResponse.StatusCode != http.StatusOK {
+		t.Fatalf("expected ready health success, got %d", readyResponse.StatusCode)
+	}
+
+	legacyHealthResponse := mustDoRequest(t, server, http.MethodGet, "/api/healthz", nil, telemetryContext)
+	if legacyHealthResponse.StatusCode != http.StatusOK {
+		t.Fatalf("expected legacy health success, got %d", legacyHealthResponse.StatusCode)
 	}
 
 	telemetryResponse := mustDoRequest(t, server, http.MethodPost, "/api/telemetry", map[string]any{
@@ -287,6 +307,27 @@ func TestServerRoutesThroughBffBoundary(t *testing.T) {
 	deleteResponse := mustDoRequest(t, server, http.MethodDelete, "/api/contacts/contact-1", nil, telemetryContext)
 	if deleteResponse.StatusCode != http.StatusNoContent {
 		t.Fatalf("expected delete response, got %d", deleteResponse.StatusCode)
+	}
+}
+
+func TestServerReadinessDependsOnBackendHealth(t *testing.T) {
+	backendHealthChecks := 0
+	server := httptest.NewServer(NewServer(Dependencies{
+		BackendGateway: fakeBackendGateway{
+			healthCheckFn: func(context TelemetryContext) error {
+				backendHealthChecks++
+				return errors.New("backend unavailable")
+			},
+		},
+	}).Handler())
+	defer server.Close()
+
+	response := mustDoRequest(t, server, http.MethodGet, "/api/health/ready", nil, nil)
+	if response.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("expected readiness failure, got %d", response.StatusCode)
+	}
+	if backendHealthChecks != 1 {
+		t.Fatalf("expected one backend health check, got %d", backendHealthChecks)
 	}
 }
 

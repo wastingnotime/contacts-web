@@ -64,6 +64,13 @@ The historical UI implemented that workflow in Mithril plus Redux. The current d
 
 The BFF summary suggests the repository may also need a separate web app boundary inside the same repo, so SPA behavior and delivery-adapter behavior can evolve together without becoming one mixed component tree.
 
+The `contacts-web` runtime adds its own production health contract on top of the backend reference:
+
+- `GET /health/live` at the SPA container root reports liveness for the static browser runtime
+- `GET /health/ready` at the SPA container root reports readiness for serving browser traffic
+- `GET /api/health/live` on the BFF reports liveness for the browser-facing delivery adapter
+- `GET /api/health/ready` on the BFF reports readiness and depends on the backend dependency that BFF truly needs
+
 The isolated mode note adds a second pressure on the repository: the frontend should be easy to exercise without a live backend when the goal is UI iteration, edge-state inspection, or deterministic testing. That suggests an intentional local mode with mock API behavior and no backend dependency may be useful as an evaluation and development path, provided it stays separate from the contacts backend contract.
 
 The integrated local mode note adds a complementary pressure: the frontend should also be easy to exercise with real local service interaction when the goal is contract validation, flow debugging, or integration testing. That suggests a second intentional local mode that runs the frontend with a seeded backend and local database through Docker Compose, while still keeping it separate from the external production backend contract.

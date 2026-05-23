@@ -91,6 +91,8 @@ func TestHTTPContactsBackendGateway(t *testing.T) {
 			})
 		case request.Method == http.MethodDelete && request.URL.Path == "/contacts/contact-1":
 			response.WriteHeader(http.StatusNoContent)
+		case request.Method == http.MethodGet && request.URL.Path == "/healthz":
+			response.WriteHeader(http.StatusOK)
 		default:
 			t.Errorf("unexpected request: %s %s", request.Method, request.URL.Path)
 		}
@@ -142,5 +144,9 @@ func TestHTTPContactsBackendGateway(t *testing.T) {
 
 	if err := gateway.DeleteContact("contact-1", telemetryContext); err != nil {
 		t.Fatalf("expected delete contact to succeed: %v", err)
+	}
+
+	if err := gateway.HealthCheck(telemetryContext); err != nil {
+		t.Fatalf("expected health check to succeed: %v", err)
 	}
 }

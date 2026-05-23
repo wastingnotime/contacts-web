@@ -88,6 +88,22 @@ func (s *Server) serveHTTP(response http.ResponseWriter, request *http.Request) 
 	bffTelemetryContext.TraceParent = CreateTraceParent(bffTelemetryContext.TraceID, bffTelemetryContext.SpanID, true)
 
 	switch {
+	case request.Method == http.MethodGet && apiPath == "/health/live":
+		statusCode = http.StatusOK
+		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusOK))
+		writeJSON(response, http.StatusOK, map[string]string{"status": "alive"})
+	case request.Method == http.MethodGet && apiPath == "/health/ready":
+		if err := s.client.HealthCheck(bffTelemetryContext); err != nil {
+			requestErr = err
+			statusCode = http.StatusServiceUnavailable
+			s.recordRequestFailure(span, err)
+			span.SetAttributes(attribute.Int("http.response.status_code", http.StatusServiceUnavailable))
+			writeJSON(response, http.StatusServiceUnavailable, map[string]string{"status": "not_ready"})
+			return
+		}
+		statusCode = http.StatusOK
+		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusOK))
+		writeJSON(response, http.StatusOK, map[string]string{"status": "ready"})
 	case request.Method == http.MethodGet && apiPath == "/healthz":
 		statusCode = http.StatusOK
 		span.SetAttributes(attribute.Int("http.response.status_code", http.StatusOK))
