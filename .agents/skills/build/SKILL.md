@@ -15,11 +15,13 @@ Implement one bounded slice from the repository artifacts.
 - `decisions.md`
 - `docs/building/project_structure.md`
 - `docs/operating/skills_workflow.md`
+- relevant `work/changes/<id>/request_slice_map.md` when available
 - `docs/slices/<specific_slice>.md`
 
 # Inputs
 
 - `docs/slices/<specific_slice>.md`
+- relevant `work/changes/<id>/request_slice_map.md` when available
 - current repository code
 - architectural and structural guidance
 
@@ -33,6 +35,7 @@ Implement one bounded slice from the repository artifacts.
 
 - implement the slice in code
 - add or update deterministic tests
+- keep the implemented slice aligned with its coverage entry in the request-to-slice map when one exists
 - keep boundaries aligned with architecture and project structure
 - write `implementation.md` when the change needs an explicit implementation artifact
 - run relevant validation commands when feasible

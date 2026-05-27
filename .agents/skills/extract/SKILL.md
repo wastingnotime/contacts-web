@@ -1,6 +1,6 @@
 ---
 name: extract
-description: Extract change signals, external evidence, and domain material into explicit repository artifacts for the MRL loop. Use when starting a new loop or when new external code, docs, stakeholder input, runtime evidence, or reference material must be converted into updated semantic artifacts without designing implementation or writing production code.
+description: Extract change signals, external evidence, runtime feedback, and domain material into explicit repository artifacts for the MRL loop. Use when starting a new loop or when new external code, docs, stakeholder input, runtime evidence, exposure feedback, or reference material must be converted into updated semantic artifacts without designing implementation or writing production code.
 ---
 
 # Mission
@@ -21,6 +21,7 @@ Capture relevant external or newly observed signals and turn them into explicit 
 - external code
 - external docs
 - runtime evidence
+- feedback produced after lifecycle exposure
 - broad domain references
 
 # Model Guidance
@@ -32,6 +33,7 @@ Capture relevant external or newly observed signals and turn them into explicit 
 # Must Do
 
 - identify which external signals matter to the loop
+- treat post-exposure runtime feedback as source evidence, not as permission to patch behavior directly
 - update or create `request.md` when the change needs a bounded request artifact
 - update `docs/semantics/model_hypothesis.md` when the target model changes
 - update `docs/semantics/domain_background_knowledge.md` when the reviewer needs broader domain context

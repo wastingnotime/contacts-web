@@ -4,6 +4,11 @@
 
 This document defines how implementation packs relate to the MRL core.
 
+## Scope
+
+This document defines MRL core rules for pack selection and pack boundaries.
+It does not make a specific project architecture mandatory.
+
 Use it when an adopting repository needs to choose a language, architecture, runtime topology, or test shape without rewriting the MRL loop itself.
 
 ---
@@ -86,8 +91,6 @@ This metadata keeps the semantic model shared while making implementation placem
 
 - `python_ddd_monolith`
 - `typescript_application`
-- `go_service`
-- `event_sourced_domain`
 - `polyglot_client_server`
 
 Repositories do not need all packs. They should define only the packs they actually intend to use.
@@ -101,7 +104,7 @@ When promoting a new pack from a real project:
 1. build a few real slices first
 2. capture repeated language or architecture decisions
 3. separate reusable pack guidance from project-specific choices
-4. create a new file under `docs/packs/`
+4. create a new file under `docs/packs/` for portable starter packs, or under an extension namespace such as `docs/packs/extensions/<owner>/` for organization-owned packs
 5. update this document to list the new pack
 6. record the pack decision in `decisions.md`
 

@@ -4,6 +4,11 @@
 
 Use this pack when <the kind of model or system it fits>.
 
+## Scope
+
+This pack defines reusable implementation defaults.
+It does not define MRL core behavior or project-specific domain behavior.
+
 This pack exists to define reusable implementation defaults for MRL repositories that share the same language, architecture, and runtime shape.
 
 ---

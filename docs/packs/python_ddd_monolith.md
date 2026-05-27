@@ -4,6 +4,11 @@
 
 This pack defines the current example implementation default for the starter repository.
 
+## Scope
+
+This pack defines reusable implementation defaults.
+It does not define MRL core behavior or project-specific domain behavior.
+
 Use it when the model fits a single Python codebase with layered boundaries and deterministic local execution.
 
 ---

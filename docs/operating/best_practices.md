@@ -4,6 +4,11 @@
 
 This document captures practical guidance for running MRL well.
 
+## Scope
+
+This document defines portable MRL guidance.
+It does not define project-specific architecture or domain policy.
+
 Use it for habits that improve phase discipline, artifact quality, and architectural timing without changing the core loop definition.
 
 ---
@@ -133,17 +138,3 @@ This affects:
 - how slices should be scoped
 - how often built artifacts should be run and inspected
 - whether frontend and backend should stay closely coupled during construction
-
----
-
-## Session Productivity
-
-If a repository wants lightweight operational feedback on how MRL work is progressing, track session metrics alongside normal artifact review.
-
-Use `docs/session_metrics.md` as the starter pattern for:
-
-- token-efficiency tracking
-- historical session snapshots
-- simple investigation thresholds when sessions become expensive or drift-prone
-
-These metrics should guide inspection of session shape, not replace review of slice quality, model quality, or delivered behavior.
