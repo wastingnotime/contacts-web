@@ -7,6 +7,7 @@
 ## What Changed
 
 - added an nginx `/api/` proxy rule in the static SPA origin so browser requests reach the BFF
+- proxied `/api/*` to the Swarm service DNS name `contacts-web-bff`
 - preserved the existing static asset and health-check behavior in the SPA container
 - kept the browser-facing `/api` contract unchanged
 - added a production delivery test that asserts the proxy boundary is present in `nginx.conf`
@@ -22,4 +23,3 @@
 
 - `npm test`
 - `npm run build`
-
