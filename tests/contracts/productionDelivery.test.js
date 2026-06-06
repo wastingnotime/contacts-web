@@ -22,6 +22,11 @@ describe("contacts web production delivery artifacts", () => {
     expect(spaDockerfile).toContain("http://127.0.0.1/health/ready");
     expect(nginxConfig).toContain("location = /health/live");
     expect(nginxConfig).toContain("location = /health/ready");
+    expect(nginxConfig).toContain("location ^~ /api/");
+    expect(nginxConfig).toContain("proxy_pass http://wnt_contacts-web-bff:4010;");
+    expect(nginxConfig).toContain("proxy_http_version 1.1;");
+    expect(nginxConfig).toContain("proxy_set_header Host $host;");
+    expect(nginxConfig).toContain("proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;");
     expect(nginxConfig).toContain(`return 200 '{"status":"alive"}';`);
     expect(nginxConfig).toContain(`return 200 '{"status":"ready"}';`);
     expect(bffDockerfile).toContain("FROM golang:1.25-alpine");

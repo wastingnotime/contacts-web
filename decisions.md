@@ -39,6 +39,27 @@ Any additional implementation guidance, migration note, or follow-up.
 
 Add entries as the repository evolves.
 
+## DEC-0017 - Proxy Browser `/api` Requests Through The SPA Origin In Production
+
+- Date: 2026-06-06
+- Status: accepted
+- Owners: both
+
+### Context
+The production browser path for `contacts-web` lands on the static nginx origin before it reaches the BFF. The live deployment returned `405` for `POST /api/telemetry` because the SPA origin did not proxy `/api` requests to the BFF even though the browser contract expects relative `/api` paths to stay aligned across dev and production.
+
+### Decision
+Keep the SPA origin as the public entrypoint for browser traffic, but teach nginx to proxy `/api/*` requests to the stack's BFF service. Preserve the existing static asset and health-check behavior, and keep the browser-facing `/api` contract unchanged.
+
+### Consequences
+The static SPA container now carries a narrow reverse-proxy rule for API requests in production. Browser telemetry and contact workflows reach the BFF through the same relative path used in development, which restores the contract without requiring a broader deployment topology change in this repository.
+
+### Alternatives considered
+Move `/api` routing entirely into CloudFront or Traefik. That was not chosen for this fix because the live failure already occurs at the SPA origin, and the smallest correction is to forward the existing `/api` prefix from nginx to the BFF.
+
+### Notes
+Keep the proxy rule narrow and path-based. Do not collapse the SPA and BFF into one container image; the repository still exports separate artifacts for the static site and the BFF runtime.
+
 ## DEC-0016 - Introduce A Root Contracts Index For Public Browser Boundaries
 
 - Date: 2026-05-18
