@@ -36,7 +36,7 @@ describe("contacts web production delivery artifacts", () => {
     expect(bffDockerfile).toContain("ENV CONTACTS_WEB_BFF_PORT=4010");
     expect(bffDockerfile).toContain("EXPOSE 4010");
     expect(bffDockerfile).toContain("HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3");
-    expect(bffDockerfile).toContain("http://127.0.0.1:4010/api/health/ready");
+    expect(bffDockerfile).toContain("http://127.0.0.1:4010/api/health/live");
     expect(bffDockerfile).toContain('ENTRYPOINT ["./contacts-web-bff"]');
   });
 });
