@@ -84,8 +84,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=spa-image
+          cache-to: type=gha,mode=max,scope=spa-image
 
   publish-bff-image:
     runs-on: ubuntu-latest
@@ -139,8 +139,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=bff-image
+          cache-to: type=gha,mode=max,scope=bff-image
 
   dispatch-integration-sandbox:
     needs:
