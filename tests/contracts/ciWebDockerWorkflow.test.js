@@ -17,6 +17,7 @@ describe("ci-web-docker workflow", () => {
     expect(workflow).toContain("EVENT_TYPE: candidate-image-updated");
     expect(workflow).toContain('"service": "contacts-web"');
     expect(workflow).toContain('"image": "${SPA_IMAGE_URI}"');
+    expect(workflow).toContain('"bff_image": "${BFF_IMAGE_URI}"');
     expect(workflow).toContain('"sha": "${GITHUB_SHA}"');
     expect(workflow).not.toContain("wastingnotime/infra-platform");
     expect(workflow).not.toContain("gh pr create");

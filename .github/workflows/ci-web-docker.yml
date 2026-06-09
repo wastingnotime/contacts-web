@@ -167,6 +167,7 @@ jobs:
             "client_payload": {
               "service": "contacts-web",
               "image": "${SPA_IMAGE_URI}",
+              "bff_image": "${BFF_IMAGE_URI}",
               "sha": "${GITHUB_SHA}"
             }
           }
