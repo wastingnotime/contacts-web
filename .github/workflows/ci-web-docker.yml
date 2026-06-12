@@ -36,111 +36,48 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      image_uri: ${{ steps.image.outputs.image_uri }}
+      image_uri: ${{ steps.publish.outputs.image_reference }}
 
     steps:
       - name: checkout
         uses: actions/checkout@v6.0.3
 
-      - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v6.2.0
+      - name: Publish SPA image
+        id: publish
+        uses: ./actions/publish-candidate-image
         with:
-          aws-region: ${{ env.AWS_DEFAULT_REGION }}
-          role-to-assume: ${{ secrets.ECR_ROLE_ARN }}
-          role-session-name: ${{ vars.ECR_ROLE_NAME }}
-
-      - name: login to amazon ecr
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: set image uri
-        id: image
-        run: echo "image_uri=${{ steps.login-ecr.outputs.registry }}/${SPA_IMAGE_NAME}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-
-      - name: set up qemu
-        uses: docker/setup-qemu-action@v4
-        with:
-          cache-image: false
-
-      - name: set up docker buildx
-        uses: docker/setup-buildx-action@v4
-        with:
-          driver: docker-container
-
-      - name: extract metadata
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.SPA_IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=${{ github.sha }}
-
-      - name: build and push image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha,scope=spa-image
-          cache-to: type=gha,mode=max,scope=spa-image
+          aws_default_region: ${{ env.AWS_DEFAULT_REGION }}
+          aws_role_to_assume: ${{ secrets.ECR_ROLE_ARN }}
+          ecr_role_name: ${{ vars.ECR_ROLE_NAME }}
+          ecr_repository: ${{ env.SPA_IMAGE_NAME }}
+          service_name: contacts-web
+          build_context: .
+          dockerfile: ./Dockerfile
+          publish_latest: "true"
 
   publish-bff-image:
     runs-on: ubuntu-latest
 
     outputs:
-      image_uri: ${{ steps.image.outputs.image_uri }}
+      image_uri: ${{ steps.publish.outputs.image_reference }}
 
     steps:
       - name: checkout
         uses: actions/checkout@v6.0.3
 
-      - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v6.2.0
+      - name: Publish BFF image
+        id: publish
+        uses: ./actions/publish-candidate-image
         with:
-          aws-region: ${{ env.AWS_DEFAULT_REGION }}
-          role-to-assume: ${{ secrets.ECR_ROLE_ARN }}
-          role-session-name: ${{ vars.ECR_ROLE_NAME }}
-
-      - name: login to amazon ecr
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: set image uri
-        id: image
-        run: echo "image_uri=${{ steps.login-ecr.outputs.registry }}/${BFF_IMAGE_NAME}:bff-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-
-      - name: set up qemu
-        uses: docker/setup-qemu-action@v4
-        with:
-          cache-image: false
-
-      - name: set up docker buildx
-        uses: docker/setup-buildx-action@v4
-        with:
-          driver: docker-container
-
-      - name: extract metadata
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.BFF_IMAGE_NAME }}
-          tags: |
-            type=raw,value=bff-${{ github.sha }}
-
-      - name: build and push bff image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: apps/bff/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha,scope=bff-image
-          cache-to: type=gha,mode=max,scope=bff-image
+          aws_default_region: ${{ env.AWS_DEFAULT_REGION }}
+          aws_role_to_assume: ${{ secrets.ECR_ROLE_ARN }}
+          ecr_role_name: ${{ vars.ECR_ROLE_NAME }}
+          ecr_repository: ${{ env.BFF_IMAGE_NAME }}
+          service_name: contacts-web
+          build_context: .
+          dockerfile: apps/bff/Dockerfile
+          image_tag_prefix: bff-
+          publish_latest: "false"
 
   dispatch-integration-sandbox:
     needs:

@@ -1,0 +1,210 @@
+name: Publish Candidate Image
+description: Build, publish, and dispatch a candidate image for WNT repositories.
+
+inputs:
+  aws_default_region:
+    description: AWS region used for ECR and dispatch calls.
+    required: true
+  aws_role_to_assume:
+    description: AWS role ARN used for ECR access.
+    required: true
+  ecr_role_name:
+    description: Session name used when assuming the AWS role.
+    required: true
+  ecr_repository:
+    description: ECR repository name that receives the image.
+    required: true
+  service_name:
+    description: Service name sent to integration-sandbox.
+    required: true
+  dispatch_repository:
+    description: GitHub repository that receives the repository_dispatch event.
+    required: false
+    default: ""
+  dispatch_token:
+    description: GitHub token used to call the dispatch API.
+    required: false
+    default: ""
+  build_context:
+    description: Docker build context.
+    required: false
+    default: .
+  dockerfile:
+    description: Dockerfile path inside the build context.
+    required: false
+    default: Dockerfile
+  publish_latest:
+    description: Whether to tag and push the latest image tag.
+    required: false
+    default: "true"
+  image_tag_prefix:
+    description: Prefix used for the immutable SHA tag.
+    required: false
+    default: sha-
+  platforms:
+    description: Target platforms passed to buildx.
+    required: false
+    default: linux/amd64,linux/arm64
+  dispatch_event_type:
+    description: repository_dispatch event type.
+    required: false
+    default: candidate-image-updated
+  extra_client_payload_json:
+    description: Optional JSON object merged into the repository_dispatch client payload.
+    required: false
+    default: "{}"
+
+outputs:
+  image_reference:
+    description: Immutable image reference produced by the build.
+    value: ${{ steps.image-meta.outputs.image_reference }}
+  image_digest:
+    description: Digest produced by the image build.
+    value: ${{ steps.publish-image.outputs.digest }}
+  image_tags:
+    description: Newline-delimited image tags used for the publish step.
+    value: ${{ steps.image-meta.outputs.image_tags }}
+
+runs:
+  using: composite
+  steps:
+    - name: Validate publish inputs
+      shell: bash
+      env:
+        AWS_DEFAULT_REGION: ${{ inputs.aws_default_region }}
+        AWS_ROLE_TO_ASSUME: ${{ inputs.aws_role_to_assume }}
+        ECR_ROLE_NAME: ${{ inputs.ecr_role_name }}
+        ECR_REPOSITORY: ${{ inputs.ecr_repository }}
+        SERVICE_NAME: ${{ inputs.service_name }}
+        DISPATCH_REPOSITORY: ${{ inputs.dispatch_repository }}
+      run: |
+        : "${AWS_DEFAULT_REGION:?AWS region is required}"
+        : "${AWS_ROLE_TO_ASSUME:?AWS role ARN is required}"
+        : "${ECR_ROLE_NAME:?AWS session name is required}"
+        : "${ECR_REPOSITORY:?ECR repository is required}"
+        : "${SERVICE_NAME:?Service name is required}"
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v6.2.0
+      with:
+        aws-region: ${{ inputs.aws_default_region }}
+        role-to-assume: ${{ inputs.aws_role_to_assume }}
+        role-session-name: ${{ inputs.ecr_role_name }}
+
+    - name: Log in to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Set image metadata
+      id: image-meta
+      shell: bash
+      env:
+        REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ inputs.ecr_repository }}
+        IMAGE_TAG_PREFIX: ${{ inputs.image_tag_prefix }}
+        PUBLISH_LATEST: ${{ inputs.publish_latest }}
+      run: |
+        sha_tag="${IMAGE_TAG_PREFIX}${GITHUB_SHA}"
+        image_reference="${REGISTRY}/${ECR_REPOSITORY}:${sha_tag}"
+        image_tags="${REGISTRY}/${ECR_REPOSITORY}:${sha_tag}"
+
+        if [ "${PUBLISH_LATEST}" = "true" ]; then
+          image_tags="${image_tags}"$'\n'"${REGISTRY}/${ECR_REPOSITORY}:latest"
+        fi
+
+        {
+          echo "image_reference=${image_reference}"
+          echo "image_tags<<EOF"
+          printf '%s\n' "${image_tags}"
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v4
+      with:
+        cache-image: false
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
+
+    - name: Build and push candidate image
+      id: publish-image
+      uses: docker/build-push-action@v7
+      with:
+        context: ${{ inputs.build_context }}
+        file: ${{ inputs.dockerfile }}
+        push: true
+        tags: ${{ steps.image-meta.outputs.image_tags }}
+        platforms: ${{ inputs.platforms }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Dispatch candidate image to integration sandbox
+      shell: bash
+      env:
+        DISPATCH_TOKEN: ${{ inputs.dispatch_token }}
+        DISPATCH_REPOSITORY: ${{ inputs.dispatch_repository }}
+        SERVICE_NAME: ${{ inputs.service_name }}
+        IMAGE_REFERENCE: ${{ steps.image-meta.outputs.image_reference }}
+        IMAGE_DIGEST: ${{ steps.publish-image.outputs.digest }}
+        IMAGE_TAGS: ${{ steps.image-meta.outputs.image_tags }}
+        EVENT_TYPE: ${{ inputs.dispatch_event_type }}
+        EXTRA_CLIENT_PAYLOAD_JSON: ${{ inputs.extra_client_payload_json }}
+      run: |
+        python3 - <<'PY'
+        import json
+        import os
+        import sys
+        import urllib.error
+        import urllib.request
+
+        token = os.environ.get("DISPATCH_TOKEN", "")
+        repository = os.environ.get("DISPATCH_REPOSITORY", "")
+        if not token or not repository:
+            print("::warning::dispatch inputs are incomplete; skipping candidate-image dispatch.")
+            sys.exit(0)
+
+        if repository.count("/") != 1:
+            raise SystemExit(f"Invalid dispatch repository: {repository}")
+
+        owner, repo = repository.split("/", 1)
+        payload = {
+            "service": os.environ["SERVICE_NAME"],
+            "image": os.environ["IMAGE_REFERENCE"],
+            "sha": os.environ["GITHUB_SHA"],
+            "image_digest": os.environ.get("IMAGE_DIGEST", ""),
+            "image_tags": os.environ.get("IMAGE_TAGS", ""),
+        }
+
+        extra_raw = os.environ.get("EXTRA_CLIENT_PAYLOAD_JSON", "{}")
+        if extra_raw.strip():
+            extra = json.loads(extra_raw)
+            if not isinstance(extra, dict):
+                raise SystemExit("extra_client_payload_json must decode to a JSON object")
+            payload.update(extra)
+
+        request = urllib.request.Request(
+            f"https://api.github.com/repos/{owner}/{repo}/dispatches",
+            data=json.dumps({
+                "event_type": os.environ["EVENT_TYPE"],
+                "client_payload": payload,
+            }).encode(),
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github+json",
+                "Content-Type": "application/json",
+                "X-GitHub-Api-Version": "2022-11-28",
+            },
+            method="POST",
+        )
+
+        try:
+            with urllib.request.urlopen(request) as response:
+                response.read()
+        except urllib.error.HTTPError as exc:
+            print(f"::warning::repository_dispatch returned HTTP {exc.code}; skipping candidate-image dispatch.")
+            sys.exit(0)
+        except Exception as exc:
+            print(f"::warning::candidate-image dispatch failed: {exc}; skipping dispatch.")
+            sys.exit(0)
+        PY
