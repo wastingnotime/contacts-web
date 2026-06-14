@@ -39,6 +39,27 @@ Any additional implementation guidance, migration note, or follow-up.
 
 Add entries as the repository evolves.
 
+## DEC-0018 - Ignore `esbuild` Dependabot Updates Until The Storybook Stack Can Move
+
+- Date: 2026-06-14
+- Status: accepted
+- Owners: both
+
+### Context
+Dependabot security updates for `esbuild` fail in the current dependency graph. The published `storybook` line used by this repository still caps `esbuild` below the patched `0.28.1` release, and the available `storybook-solidjs-vite` versions do not provide a clean upgrade path on top of the repo's current `vite` 8 baseline.
+
+### Decision
+Ignore Dependabot updates for `esbuild` in `.github/dependabot.yml` until the Storybook/Solid/Vite stack can be migrated together.
+
+### Consequences
+Dependabot stops opening a failing security update PR for `esbuild`. The repository keeps the current Storybook stack for now, but the `esbuild` vulnerability remains a tracked follow-up until a compatible upstream migration is available.
+
+### Alternatives considered
+Use an npm override to force `esbuild@0.28.1`. That was rejected because it produced peer-resolution warnings and did not give a clean dependency graph.
+
+### Notes
+Treat this as a temporary suppression, not a permanent exemption. Revisit it when a Storybook/Solid adapter release and matching Vite alignment can accept the patched `esbuild` line cleanly.
+
 ## DEC-0017 - Proxy Browser `/api` Requests Through The SPA Origin In Production
 
 - Date: 2026-06-06
