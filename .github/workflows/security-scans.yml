@@ -34,7 +34,7 @@ jobs:
 
       - name: scan repository config with checkov
         continue-on-error: true
-        uses: bridgecrewio/checkov-action@v12.3107.0
+        uses: bridgecrewio/checkov-action@v12.3108.0
         with:
           directory: .
           framework: all
